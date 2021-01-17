@@ -86,6 +86,9 @@ function got_packet(msgdata) {
         if(myJSON.longitude != undefined) {
             getID("longitude").value = myJSON.longitude
         }
+        if(myJSON.ip != undefined) {
+            getID("ip").value = myJSON.ip
+        }
     }
 
 }
@@ -93,11 +96,6 @@ function got_packet(msgdata) {
 function SSEClose() {
     if (eventListen != null)
         eventListen.close();
-}
-
-function SSESubscribe() {
-    console.log("Subscribing");
-    window.open(getID("windowUrl").value + "rest/events/subscribe");
 }
 
 function SSEListenEvents() {
@@ -108,6 +106,35 @@ function SSEListenEvents() {
     }, false);
 }
 
+function SSESubscribeCallback(responseText) {
+    eventListen = new EventSource(responseText);
+    eventListen.addEventListener("event", function(event) {
+        got_packet(event.data);
+    }, false);
+}
+
+function SSESubscribe() {
+    console.log("Subscribing");
+    httpGetAsync(getID("windowUrl").value + "rest/events/subscribe", SSESubscribeCallback);
+}
+
+function httpGetAsync(theUrl, callback)
+{
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function() { 
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+            callback(xmlHttp.responseText);
+    }
+    xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+    xmlHttp.send(null);
+}
+
+function clearLog() {
+    getID("r").value = "";
+    tail = head;
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     getID("windowUrl").value = document.URL;
+    httpGetAsync(getID("windowUrl").value + "rest/events/subscribe", SSESubscribeCallback);
 }, true);

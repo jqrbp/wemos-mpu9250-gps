@@ -6,6 +6,7 @@ https://electropeak.com/learn/
 
 #include "TinyGPS.h"
 #include <SoftwareSerial.h>
+#include "wifiUtils.h"
 #include "webUtils.h"
 /*
    This sample sketch demonstrates the normal use of a TinyGPS++ (TinyGPSPlus) object.
@@ -74,6 +75,7 @@ void setup()
   pinMode(ledPin, OUTPUT);
   Serial.begin(115200);
 
+  wifi_setup();
   web_setup();
 
   ss.begin(GPSBaud);
@@ -100,6 +102,8 @@ void loop()
     blinkTime = millis();
     digitalWrite(ledPin, !digitalRead(ledPin));
   }
+  
+  wifi_loop();
   
   // This sketch displays information every time a new sentence is correctly encoded.
   while (ss.available() > 0) {
@@ -129,22 +133,31 @@ void loop()
 
 char latStr[11];
 char longStr[11];
+bool latLongValid = false;
+uint32_t latLongValidTime = 0;
+const uint32_t latLongValidTimeOut = 10000;
+
 const uint32_t displayInfoTimeLimit = 1000;
 uint32_t displayInfoTime = 0;
+
 void displayInfo()
 {
-  if (gps.location.isValid())
-  {
+  if (gps.location.isValid()) {
+
+    if (!latLongValid) latLongValid = true;
+    latLongValidTime = millis();
+
     if (millis() - displayInfoTime < displayInfoTimeLimit) {
       return;
     }
+    
     displayInfoTime = millis();
     
     dtostrf(gps.location.lat(),4,6,latStr);
     dtostrf(gps.location.lng(),4,6,longStr);
     String str = "{\"latitude\":" + String(latStr) + ",\"longitude\":" + String(longStr) + "}";
     SSEBroadcastTxt(str);
-    String fileStr = String(latStr) + ", " + String(longStr) + ";";
+    String fileStr = "#" + String(latStr) + ", " + String(longStr) + ";";
 
     Serial.print(F("Location: ")); 
     Serial.print(gps.location.lat(), 6);
@@ -189,7 +202,16 @@ void displayInfo()
     fileStr+=";";
     appendFile(R"(/gpslog.txt)", fileStr.c_str() );
     Serial.println();
+  } else {
+    if (latLongValid) {
+      if (millis() - latLongValidTime > latLongValidTimeOut) {
+          String str = "{\"latitude\":" + String(latStr) + ",\"longitude\":" + String(longStr) + "}";
+          SSEBroadcastTxt(str);
+          latLongValidTime = millis();
+      }
+    }
   }
+
 }
 
 void gpsSatelliteTracker() {

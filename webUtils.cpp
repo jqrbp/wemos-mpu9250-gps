@@ -11,23 +11,9 @@
 */
 #include <FS.h>
 #include <LittleFS.h>
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
 // #include <ESP8266WebServerSecure.h>
 #include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
 #include <Ticker.h>
-
-#ifndef STASSID
-#define STASSID "myAccessPoint" //"U+Net2DB0" //"iptimeM2G"
-#define STAPSK  "5000013954"
-#endif
-
-const char* ssid = STASSID;
-const char* password = STAPSK;
-const uint32_t wifiConnectTimeOut = 30000;
-uint32_t wifiConnectTime = 0;
-bool access_point_flag = false;
 
 const unsigned int serverPort = 8080;
 
@@ -454,10 +440,11 @@ void handleSubscribe() {
   Serial.printf_P(PSTR("Allocated channel %d, on uri %s\n"), channel, SSEurl.substring(offset).c_str());
   //server.on(SSEurl.substring(offset), std::bind(SSEHandler, &(subscription[channel])));
   Serial.printf_P(PSTR("subscription for client IP %s: event bus location: %s\n"), clientIP.toString().c_str(), SSEurl.c_str());
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send_P(200, "text/plain", SSEurl.c_str());
 }
 
-void startServers() {
+void web_setup() {
   ////////////////////////////////
   // FILESYSTEM INIT
 
@@ -485,51 +472,8 @@ void startServers() {
   Serial.println("HTTPS server and  SSE EventSource started");
 }
 
-void web_setup(void){
-  pinMode(led, OUTPUT);
-  digitalWrite(led, 0);
-  WiFi.begin(ssid, password);
-  Serial.println("");
-
-  wifiConnectTime = millis();
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-    if (millis() - wifiConnectTime > wifiConnectTimeOut) {
-      access_point_flag = true;
-      break;
-    }
-  }
-
-  if (!access_point_flag) {
-    configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-
-    Serial.println("");
-    Serial.print("Connected to ");
-    Serial.println(ssid);
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
-  } else {
-    Serial.print("Configuring access point...");
-    /* You can remove the password parameter if you want the AP to be open. */
-    WiFi.softAP(ssid, password);
-
-    IPAddress myIP = WiFi.softAPIP();
-    Serial.print("AP IP address: ");
-    Serial.println(myIP);
-  }
-
-  if (MDNS.begin("imasgps")) {
-    Serial.println("MDNS responder started");
-  }
-
-  startServers();
-}
-
 void web_loop(void){
   server.handleClient();
-  MDNS.update();
 
   if(SSE_broadcast_string.length() > 0 && SSE_broadcast_flag) {
     SSEBroadcastTxt(SSE_broadcast_string);
