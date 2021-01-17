@@ -1,0 +1,39 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:\\Users\\imas\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\**",
+                "D:\\imas-lab\\onedrive\\OneDrive - 비마이카(주)\\문서\\Arduino\\libraries\\**",
+                "C:\\Program Files (x86)\\Arduino\\libraries\\**",
+                "C:\\Users\\imas\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.7.4\\**",
+                "/Users/jeki/Library/Arduino15/packages/esp8266/hardware/esp8266/2.7.3/**",
+                "/Applications/Arduino.app/Contents/Java/libraries/**",
+                "/Users/jeki/Documents/Arduino/libraries/**",
+                "/Users/jeki/Library/Arduino15/packages/esp8266/tools/**"
+            ],
+            "forcedInclude": [],
+            "defines": [
+                "USBCON"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Mac",
+            "includePath": [
+                "/Users/jeki/Library/Arduino15/packages/esp8266/tools/**",
+                "/Users/jeki/Documents/Arduino/libraries/**",
+                "/Applications/Arduino.app/Contents/Java/libraries/**",
+                "/Users/jeki/Library/Arduino15/packages/esp8266/hardware/esp8266/2.7.3/**"
+            ],
+            "forcedInclude": [],
+            "defines": [
+                "USBCON"
+            ]
+        }
+    ],
+    "version": 4
+}
