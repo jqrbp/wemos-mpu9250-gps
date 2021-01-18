@@ -8,7 +8,7 @@ ESP8266WiFiMulti wifiMulti;
 
 const uint8_t ssidNum = 2;
 const char* ssid[] = { "U+Net2DB0", "iptimeM2G"};
-const char* ssid_passwd[] = { "5000013954", "imas0315!" };
+const char* ssid_passwd[] = { "5000013954", "imas0315" };
 
 const char* ap_ssid = "myAccessPoint";
 const char* ap_password = "myAPPassword";
