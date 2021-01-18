@@ -9,11 +9,11 @@
   Adapted by Earle F. Philhower, III, from the HelloServer.ino example.
   This example is released into the public domain.
 */
-#include <FS.h>
-#include <LittleFS.h>
 // #include <ESP8266WebServerSecure.h>
 #include <ESP8266WebServer.h>
 #include <Ticker.h>
+#include <LittleFS.h>
+#include "fileUtils.h"
 
 const unsigned int serverPort = 8080;
 
@@ -85,11 +85,6 @@ const int led = 2;
 static String SSE_broadcast_string = "";
 static bool SSE_broadcast_flag = false;
 
-// Filesystem variables
-const char* fsName = "LittleFS";
-FS* fileSystem = &LittleFS;
-LittleFSConfig fileSystemConfig = LittleFSConfig();
-static bool fsOK;
 static const char TEXT_PLAIN[] PROGMEM = "text/plain";
 static const char FS_INIT_ERROR[] PROGMEM = "FS INIT ERROR";
 static const char FILE_NOT_FOUND[] PROGMEM = "FileNotFound";
@@ -101,22 +96,6 @@ String H1 = "";
 String authentication_failed = "User authentication has failed.";
 const String file_credentials = R"(/credentials.txt)"; // LittleFS file name for the saved credentials
 const String change_creds =  "changecreds";            // Address for a credential change
-
-void appendFile(const char * path, const char * message) {
-  Serial.printf("Appending to file: %s\n", path);
-
-  File file = LittleFS.open(path, "a");
-  if (!file) {
-    Serial.println("Failed to open file for appending");
-    return;
-  }
-  if (file.print(message)) {
-    Serial.println("Message appended");
-  } else {
-    Serial.println("Append failed");
-  }
-  file.close();
-}
 
 void SSE_add_char(const char *c) {
   SSE_broadcast_string += c;
@@ -143,6 +122,26 @@ void SSEBroadcastTxt(String txt) {
   }
 }
 
+////////////////////////////////
+// Utils to return HTTP codes, and determine content-type
+
+void replyOK() {
+  server.send(200, FPSTR(TEXT_PLAIN), "");
+}
+
+void replyOKWithMsg(String msg) {
+  server.send(200, FPSTR(TEXT_PLAIN), msg);
+}
+
+void replyNotFound(String msg) {
+  server.send(404, FPSTR(TEXT_PLAIN), msg);
+}
+
+void replyBadRequest(String msg) {
+  Serial.println(msg);
+  server.send(400, FPSTR(TEXT_PLAIN), msg + "\r\n");
+}
+
 void replyServerError(String msg) {
   Serial.println(msg);
   server.send(500, FPSTR(TEXT_PLAIN), msg + "\r\n");
@@ -166,11 +165,37 @@ void handleNotFound(){
 }
 
 /*
+   Handle a file deletion request
+   Operation      | req.responseText
+   ---------------+--------------------------------------------------------------
+   Delete file    | parent of deleted file, or remaining ancestor
+   Delete folder  | parent of deleted folder, or remaining ancestor
+*/
+void handleFileDelete() {
+  if (!isfsOK()) {
+    return replyServerError(FPSTR(FS_INIT_ERROR));
+  }
+
+  String path = server.arg(0);
+  if (path.isEmpty() || path == "/") {
+    return replyBadRequest("BAD PATH");
+  }
+
+  Serial.println(String("handleFileDelete: ") + path);
+  if (!isFileExist(path.c_str())) {
+    return replyNotFound(FPSTR(FILE_NOT_FOUND));
+  }
+  deleteRecursive(path.c_str());
+
+  server.send(200, FPSTR(TEXT_PLAIN), "deleted: " + path);
+}
+
+/*
    Read the given file from the filesystem and stream it back to the client
 */
 bool handleFileRead(String path) {
   Serial.println(String("handleFileRead: ") + path);
-  if (!fsOK) {
+  if (!isfsOK()) {
     replyServerError(FPSTR(FS_INIT_ERROR));
     return true;
   }
@@ -186,13 +211,13 @@ bool handleFileRead(String path) {
     contentType = mime::getContentType(path);
   }
 
-  if (!fileSystem->exists(path)) {
+  if (!isFileExist(path.c_str())) {
     // File not found, try gzip version
     path = path + ".gz";
   }
 
-  if (fileSystem->exists(path)) {
-    File file = fileSystem->open(path, "r");
+  if (isFileExist(path.c_str())) {
+    File file = LittleFS.open(path, "r");
     if (server.streamFile(file, contentType) != file.size()) {
       Serial.println("Sent less data than expected!");
     }
@@ -339,7 +364,7 @@ void handleRoot() {
   if(!session_authenticated()){
     return;
   }
-  if (!fsOK) {
+  if (!isfsOK()) {
     return replyServerError(FPSTR(FS_INIT_ERROR));
   }
   String uri = ESP8266WebServer::urlDecode(server.uri()); // required to read paths with blanks
@@ -402,7 +427,7 @@ void handleAll() {
 
   Serial.printf_P(PSTR("get uri: %s\r\n"), uri);
   
-  if (!fsOK) {
+  if (!isfsOK()) {
     return replyServerError(FPSTR(FS_INIT_ERROR));
   }
   String uriStr = ESP8266WebServer::urlDecode(server.uri()); // required to read paths with blanks
@@ -444,14 +469,9 @@ void handleSubscribe() {
   server.send_P(200, "text/plain", SSEurl.c_str());
 }
 
-void web_setup() {
-  ////////////////////////////////
-  // FILESYSTEM INIT
 
-  fileSystemConfig.setAutoFormat(false);
-  fileSystem->setConfig(fileSystemConfig);
-  fsOK = fileSystem->begin();
-  Serial.println(fsOK ? F("Filesystem initialized.") : F("Filesystem init failed!"));
+void web_setup() {
+  
 
   loadcredentials();
 
@@ -466,6 +486,7 @@ void web_setup() {
   server.on("/creds",showcredentialpage); //for this simple example, just show a simple page for changing credentials at the root
   server.on("/creds" + change_creds,handlecredentialchange); //handles submission of credentials from the client
   server.on(F("/rest/events/subscribe"), handleSubscribe);
+  server.on("/delete", handleFileDelete);
   server.onNotFound(handleAll);
 
   server.begin();

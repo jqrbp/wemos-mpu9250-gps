@@ -8,6 +8,8 @@ https://electropeak.com/learn/
 #include <SoftwareSerial.h>
 #include "wifiUtils.h"
 #include "webUtils.h"
+#include "fileUtils.h"
+
 /*
    This sample sketch demonstrates the normal use of a TinyGPS++ (TinyGPSPlus) object.
    It requires the use of SoftwareSerial, and assumes that you have a
@@ -75,6 +77,7 @@ void setup()
   pinMode(ledPin, OUTPUT);
   Serial.begin(115200);
 
+  fs_setup();
   wifi_setup();
   web_setup();
 
