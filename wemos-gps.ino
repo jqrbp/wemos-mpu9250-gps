@@ -121,11 +121,12 @@ void loop()
     if (c != '\r' && c != '\n' && c > 0) rawGPSData += c;
     if(gps.encode(c)) {
       rawGPSData += "\"}";
-      SSE_add_char(rawGPSData.c_str());
+      // SSE_add_char(rawGPSData.c_str());
       displayInfo();
       gpsSatelliteElevPrinter();
         ////        gpsSatelliteTracker();
-      set_SSE_broadcast_flag(true);
+      // set_SSE_broadcast_flag(true);
+      Serial.println(rawGPSData);
       rawGPSData = "{\"raw\":\"";
     }
   }
