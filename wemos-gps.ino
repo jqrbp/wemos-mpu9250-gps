@@ -9,6 +9,7 @@ https://electropeak.com/learn/
 #include "wifiUtils.h"
 #include "webUtils.h"
 #include "fileUtils.h"
+#include "imuUtils.h"
 
 /*
    This sample sketch demonstrates the normal use of a TinyGPS++ (TinyGPSPlus) object.
@@ -77,6 +78,8 @@ void setup()
   pinMode(ledPin, OUTPUT);
   Serial.begin(115200);
 
+  imu_setup();
+
   fs_setup();
   wifi_setup();
   web_setup();
@@ -105,12 +108,14 @@ void loop()
     blinkTime = millis();
     digitalWrite(ledPin, !digitalRead(ledPin));
   }
+
+  imu_loop();
   
   wifi_loop();
   
   // This sketch displays information every time a new sentence is correctly encoded.
   while (ss.available() > 0) {
-    if (c == 0) SSE_add_char("\"");
+    // if (c == 0) SSE_add_char("\"");
     c = ss.read();
     // Serial.print(c);
     if (c != '\r' && c != '\n' && c > 0) rawGPSData += c;

@@ -63,31 +63,64 @@ function isJSONHRValid(_str) {
 function got_packet(msgdata) {
     var n, s = "";
     
-    console.log("msg: " + msgdata);
-    if (isJSONHRValid(msgdata)) {
-        if(myJSON.raw != undefined) {
-            ring[head] = myJSON.raw + "\n";
-            head = (head + 1) % 50;
-            if (tail === head)
-                tail = (tail + 1) % 50;
+    var msgjson = msgdata.split("}")
+    for (i =0; i < msgjson.length-1; i++) {
+        console.log("msg: " + msgjson[i]);
+        if (isJSONHRValid(msgjson[i] + "}")) {
+            if(myJSON.raw != undefined) {
+                ring[head] = myJSON.raw + "\n";
+                head = (head + 1) % 50;
+                if (tail === head)
+                    tail = (tail + 1) % 50;
 
-            n = tail;
-            do {
-                s = s + ring[n];
-                n = (n + 1) % 50;
-            } while (n !== head);
-            getID("r").value = s; 
-            getID("r").scrollTop =
-            getID("r").scrollHeight;
-        }
-        if(myJSON.latitude != undefined) {
-            getID("latitude").value = myJSON.latitude
-        }
-        if(myJSON.longitude != undefined) {
-            getID("longitude").value = myJSON.longitude
-        }
-        if(myJSON.ip != undefined) {
-            getID("ip").value = myJSON.ip
+                n = tail;
+                do {
+                    s = s + ring[n];
+                    n = (n + 1) % 50;
+                } while (n !== head);
+                getID("r").value = s; 
+                getID("r").scrollTop =
+                getID("r").scrollHeight;
+            }
+            if(myJSON.latitude != undefined) {
+                getID("latitude").value = myJSON.latitude
+            }
+            if(myJSON.longitude != undefined) {
+                getID("longitude").value = myJSON.longitude
+            }
+            if(myJSON.ip != undefined) {
+                getID("ip").value = myJSON.ip
+            }
+            if(myJSON.qw != undefined) {
+                getID("qw").value = myJSON.qw
+            }
+            if(myJSON.qx != undefined) {
+                getID("qx").value = myJSON.qx
+            }
+            if(myJSON.qy != undefined) {
+                getID("qy").value = myJSON.qy
+            }
+            if(myJSON.qz != undefined) {
+                getID("qz").value = myJSON.qz
+            }
+            if(myJSON.r != undefined) {
+                getID("roll").value = myJSON.r
+            }
+            if(myJSON.p != undefined) {
+                getID("pitch").value = myJSON.p
+            }
+            if(myJSON.y != undefined) {
+                getID("yaw").value = myJSON.y
+            }
+            if(myJSON.ax != undefined) {
+                getID("ax").value = myJSON.ax
+            }
+            if(myJSON.ay != undefined) {
+                getID("ay").value = myJSON.ay
+            }
+            if(myJSON.az != undefined) {
+                getID("az").value = myJSON.az
+            }
         }
     }
 
