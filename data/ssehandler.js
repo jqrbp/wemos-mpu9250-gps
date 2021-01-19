@@ -65,23 +65,21 @@ function got_packet(msgdata) {
     
     var msgjson = msgdata.split("}")
     for (i =0; i < msgjson.length-1; i++) {
-        console.log("msg: " + msgjson[i]);
-        if (isJSONHRValid(msgjson[i] + "}")) {
-            if(myJSON.raw != undefined) {
-                ring[head] = myJSON.raw + "\n";
-                head = (head + 1) % 50;
-                if (tail === head)
-                    tail = (tail + 1) % 50;
+        ring[head] = msgjson[i] + "\n";
+        head = (head + 1) % 50;
+        if (tail === head)
+            tail = (tail + 1) % 50;
 
-                n = tail;
-                do {
-                    s = s + ring[n];
-                    n = (n + 1) % 50;
-                } while (n !== head);
-                getID("r").value = s; 
-                getID("r").scrollTop =
-                getID("r").scrollHeight;
-            }
+        n = tail;
+        do {
+            s = s + ring[n];
+            n = (n + 1) % 50;
+        } while (n !== head);
+        getID("r").value = s; 
+        getID("r").scrollTop =
+        getID("r").scrollHeight;
+
+        if (isJSONHRValid(msgjson[i] + "}")) {
             if(myJSON.latitude != undefined) {
                 getID("latitude").value = myJSON.latitude
             }
@@ -120,6 +118,9 @@ function got_packet(msgdata) {
             }
             if(myJSON.az != undefined) {
                 getID("az").value = myJSON.az
+            }
+            if(myJSON.h != undefined) {
+                getID("heading").value = myJSON.h
             }
         }
     }

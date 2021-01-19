@@ -591,17 +591,17 @@ inv_error_t MPU9250_DMP::dmpSetPedometerTime(unsigned long time)
 	return dmp_set_pedometer_walk_time(time);
 }
 
-float MPU9250_DMP::calcAccel(int axis)
+float MPU9250_DMP::calcAccel(short axis)
 {
 	return (float) axis / (float) _aSense;
 }
 
-float MPU9250_DMP::calcGyro(int axis)
+float MPU9250_DMP::calcGyro(short axis)
 {
 	return (float) axis / (float) _gSense;
 }
 
-float MPU9250_DMP::calcMag(int axis)
+float MPU9250_DMP::calcMag(short axis)
 {
 	return (float) axis / (float) _mSense;
 }

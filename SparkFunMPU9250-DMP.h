@@ -70,9 +70,9 @@ const signed char defaultOrientation[9] = {
 class MPU9250_DMP 
 {
 public:
-	int ax, ay, az;
-	int gx, gy, gz;
-	int mx, my, mz;
+	short ax, ay, az;
+	short gx, gy, gz;
+	short mx, my, mz;
 	long qw, qx, qy, qz;
 	long temperature;
 	unsigned long time;
@@ -351,11 +351,11 @@ public:
 	inv_error_t lowPowerAccel(unsigned short rate);
 
 	// calcAccel -- Convert 16-bit signed acceleration value to g's
-	float calcAccel(int axis);
+	float calcAccel(short axis);
 	// calcGyro -- Convert 16-bit signed gyroscope value to degree's per second
-	float calcGyro(int axis);
+	float calcGyro(short axis);
 	// calcMag -- Convert 16-bit signed magnetometer value to microtesla (uT)
-	float calcMag(int axis);
+	float calcMag(short axis);
 	// calcQuat -- Convert Q30-format quaternion to a vector between +/- 1
 	float calcQuat(long axis);
 	
