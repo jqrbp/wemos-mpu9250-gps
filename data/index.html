@@ -1,13 +1,10 @@
 <html>
     <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <style>
-		body { margin: 0; }
-		canvas { width: 100%; height: 100% }
-	</style>
     <script src="ssehandler.js"></script>
     </head>
     <body>
+        <canvas id="c"></canvas>
         <div class="container">
             <h3>Url</h3>
             <input id="windowUrl"></input><button onclick="SSESubscribe()">Subscribe</button>
@@ -16,6 +13,7 @@
             <input id="latitude" value="invalid"></input><input id="longitude" value="invalid"></input>
             <h3>IMU Quaternion</h3>
             <input id="qw" value="invalid"></input><input id="qx" value="invalid"></input><input id="qy" value="invalid"></input><input id="qz" value="invalid"></input>
+            <p><input type="text" name="qrw" id="qrw" value="1"><input type="text" name="qrx" id="qrx" value="0"><input type="text" name="qry" id="qry" value="0"><input type="text" name="qrz" id="qrz" value="0"></p>
             <h3>IMU RPY</h3>
             <input id="roll" value="invalid"></input><input id="pitch" value="invalid"></input><input id="yaw" value="invalid"></input><input id="heading" value="invalid"></input>
             <h3>IMU Accel</h3>
