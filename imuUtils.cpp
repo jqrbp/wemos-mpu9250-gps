@@ -3,7 +3,7 @@
 #include "webUtils.h"
 
 MPU9250_DMP imu;
-static char imuTxtBuffer[75];
+static char imuTxtBuffer[140];
 
 float qw,qx,qy,qz;
 float ax,ay,az;

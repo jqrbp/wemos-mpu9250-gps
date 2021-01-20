@@ -140,8 +140,8 @@ void loop()
   web_loop();
 }
 
-char latStr[11];
-char longStr[11];
+char latStr[13];
+char longStr[13];
 bool latLongValid = false;
 uint32_t latLongValidTime = 0;
 const uint32_t latLongValidTimeOut = 10000;
@@ -162,8 +162,8 @@ void displayInfo()
     
     displayInfoTime = millis();
     
-    dtostrf(gps.location.lat(),4,6,latStr);
-    dtostrf(gps.location.lng(),4,6,longStr);
+    dtostrf(gps.location.lat(),4,8,latStr);
+    dtostrf(gps.location.lng(),4,8,longStr);
     String str = "{\"latitude\":" + String(latStr) + ",\"longitude\":" + String(longStr) + "}";
     SSEBroadcastTxt(str);
     String fileStr = "#" + String(latStr) + ", " + String(longStr) + ";";
