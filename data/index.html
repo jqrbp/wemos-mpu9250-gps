@@ -1,30 +1,39 @@
 <html>
     <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="main.css">
     <script src="ssehandler.js"></script>
+    <script src="three.min.js"></script>
+	<script src="MTLLoader.js"></script>
+	<script src="OBJLoader.js"></script>
+	<script src="OrbitControls.js"></script>
+	<script src="webglhandler.js"></script>
     </head>
     <body>
+        <div id="loader">
+            <h1>Loading...</h1>
+            <div class="loader"></div> 
+        </div>
         <canvas id="c"></canvas>
-        <div class="container">
+        <div id="info">
             <h3>Url</h3>
             <input id="windowUrl"></input><button onclick="SSESubscribe()">Subscribe</button>
             <h3>IP Address</h3><input id="ip"></input>
             <h3>Coordinate</h3>
             <input id="latitude" value="invalid"></input><input id="longitude" value="invalid"></input>
             <h3>IMU Quaternion</h3>
-            <input id="qw" value="invalid"></input><input id="qx" value="invalid"></input><input id="qy" value="invalid"></input><input id="qz" value="invalid"></input>
+            <input id="qw" value="1"></input><input id="qx" value="0"></input><input id="qy" value="0"></input><input id="qz" value="0"></input>
             <p><input type="text" name="qrw" id="qrw" value="1"><input type="text" name="qrx" id="qrx" value="0"><input type="text" name="qry" id="qry" value="0"><input type="text" name="qrz" id="qrz" value="0"></p>
             <h3>IMU RPY</h3>
             <input id="roll" value="invalid"></input><input id="pitch" value="invalid"></input><input id="yaw" value="invalid"></input><input id="heading" value="invalid"></input>
             <h3>IMU Accel</h3>
             <input id="ax" value="invalid"></input><input id="ay" value="invalid"></input><input id="az" value="invalid"></input>
+        </div>
+        <div id="container">
+        </div>
+        <div id="log">
             <h3>Log&nbsp;<button onclick="clearLog()">Clear</button></h3>
             <textarea id=r readonly rows=40 style="min-width: 100%;"></textarea>
         </div>
     </body>
-    <script src="three.min.js"></script>
-	<script src="MTLLoader.js"></script>
-	<script src="OBJLoader.js"></script>
-	<script src="OrbitControls.js"></script>
-	<script src="webglhandler.js"></script>
 </html>

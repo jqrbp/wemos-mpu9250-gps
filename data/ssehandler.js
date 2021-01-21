@@ -171,4 +171,5 @@ function clearLog() {
 document.addEventListener("DOMContentLoaded", function() {
     getID("windowUrl").value = document.URL;
     httpGetAsync(getID("windowUrl").value + "rest/events/subscribe", SSESubscribeCallback);
+    webgl_start();
 }, true);
