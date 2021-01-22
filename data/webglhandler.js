@@ -132,7 +132,6 @@ function webgl_start() {
    scene.add(sky);
 
    // // Model Car
-   var phongMaterial = new THREE.MeshPhongMaterial({color: 0xffffff});
    var mtlLoader = new THREE.MTLLoader();
    mtlLoader.setPath(mtlpath);
    mtlLoader.setMaterialOptions({
@@ -142,8 +141,9 @@ function webgl_start() {
    mtlLoader.load(mtlname, function (materials) {
       materials.preload();
       var objLoader = new THREE.OBJLoader();
-      objLoader.setMaterials(materials, phongMaterial);
+      objLoader.setMaterials(materials);
       objLoader.setPath(mtlpath);
+      objLoader.setResourcePath(mtlpath);
       objLoader.load(objname, function (obj) {
          object = obj;
          object.scale.x = object.scale.y = object.scale.z = OBJECT_SCALE;
@@ -152,6 +152,7 @@ function webgl_start() {
          object.traverse( function ( child ) {
                   if ( child instanceof THREE.Mesh ) {
                      child.castShadow = true;
+                     child.receiveShadow = true;
                   }
             } );
          scene.add(object);
