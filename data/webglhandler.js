@@ -139,12 +139,14 @@ function webgl_start() {
    });
 
    mtlLoader.load(mtlname, function (materials) {
+      document.getElementById("loaderTxt").innerHTML = "Loading materials...";
       materials.preload();
       var objLoader = new THREE.OBJLoader();
       objLoader.setMaterials(materials);
       objLoader.setPath(mtlpath);
       objLoader.setResourcePath(mtlpath);
       objLoader.load(objname, function (obj) {
+         document.getElementById("loaderTxt").innerHTML = "Loading object mesh...";
          object = obj;
          object.scale.x = object.scale.y = object.scale.z = OBJECT_SCALE;
          object.castShadow = true;
