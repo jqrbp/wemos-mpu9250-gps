@@ -31,7 +31,7 @@ void printIMUData(void)
     //           + String(imu.pitch) + ", " + String(imu.yaw));
     // Serial.println("Time: " + String(imu.time) + " ms");
     // Serial.println();
-    Serial.println("imu:"+String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az)+String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz));
+    Serial.println("imu raw:"+String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az)+"," + String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz));
   }
 }
 
