@@ -341,10 +341,10 @@ int MPU9250_DMP::updateGyro(void)
 int MPU9250_DMP::updateCompass(void)
 {
 	short data[3];
-	
-	if (mpu_get_compass_reg(data, &time))
+	int flag = mpu_get_compass_reg(data, &time);
+	if (flag)
 	{
-		return INV_ERROR;		
+		return flag;		
 	}
 	mx = data[X_AXIS];
 	my = data[Y_AXIS];

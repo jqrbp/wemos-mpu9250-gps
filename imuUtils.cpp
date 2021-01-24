@@ -10,34 +10,41 @@ float ax,ay,az;
 float heading;
 
 bool print_flag = false;
+uint32_t printTime = 0;
+const uint32_t printTimeLimit = 500;
 
 void printIMUData(void)
 {  
-  if (print_flag) {
-    sprintf(imuTxtBuffer, "{\"qw\":%.4f,\"qx\":%.4f,\"qy\":%.4f,\"qz\":%.4f,\"r\":%.2f,\"p\":%.2f,\"y\":%.2f,\"ax\":%.4f,\"ay\":%.4f,\"az\":%.4f,\"h\":%.2f}", 
-      qw, qx, qy, qz, imu.roll, imu.pitch, imu.yaw, ax, ay, az, heading);
-    SSEBroadcastTxt(imuTxtBuffer);
-    print_flag = false;
+  if (millis() - printTime > printTimeLimit) {
+    if (print_flag) {
+      sprintf(imuTxtBuffer, "{\"qw\":%.4f,\"qx\":%.4f,\"qy\":%.4f,\"qz\":%.4f,\"r\":%.2f,\"p\":%.2f,\"y\":%.2f,\"ax\":%.4f,\"ay\":%.4f,\"az\":%.4f,\"h\":%.2f}", 
+        qw, qx, qy, qz, imu.roll, imu.pitch, imu.yaw, ax, ay, az, heading);
+      SSEBroadcastTxt(imuTxtBuffer);
+      print_flag = false;
+    }
+    // SSE_add_char(imuTxtBuffer);
+    // Serial.println(imuTxtBuffer);
+    // Serial.println("Q: " + String(q0, 4) + ", " +
+    //                   String(q1, 4) + ", " + String(q2, 4) + 
+    //                   ", " + String(q3, 4));
+    // Serial.println("R/P/Y: " + String(imu.roll) + ", "
+    //           + String(imu.pitch) + ", " + String(imu.yaw));
+    // Serial.println("Time: " + String(imu.time) + " ms");
+    // Serial.println();
+    Serial.println("imu:"+String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az)+String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz));
   }
-  // SSE_add_char(imuTxtBuffer);
-  // Serial.println(imuTxtBuffer);
-  // Serial.println("Q: " + String(q0, 4) + ", " +
-  //                   String(q1, 4) + ", " + String(q2, 4) + 
-  //                   ", " + String(q3, 4));
-  // Serial.println("R/P/Y: " + String(imu.roll) + ", "
-  //           + String(imu.pitch) + ", " + String(imu.yaw));
-  // Serial.println("Time: " + String(imu.time) + " ms");
-  // Serial.println();
 }
 
 void imu_loop(void) {
+    if (imu.updateCompass() == INV_SUCCESS) {
+      heading = imu.computeCompassHeading();
+    }
     // Check for new data in the FIFO
     if ( imu.fifoAvailable() )
     {
         // Use dmpUpdateFifo to update the ax, gx, mx, etc. values
         if ( imu.dmpUpdateFifo() == INV_SUCCESS)
         {
-            imu.updateCompass();
             // computeEulerAngles can be used -- after updating the
             // quaternion values -- to estimate roll, pitch, and yaw
             imu.computeEulerAngles();
@@ -53,9 +60,6 @@ void imu_loop(void) {
             ax = imu.calcAccel(imu.ax);
             ay = imu.calcAccel(imu.ay);
             az = imu.calcAccel(imu.az);
-
-            heading = imu.computeCompassHeading();
-            // Serial.println("accel=" + String(imu.getAccelSens()) + "," + String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az));
             
             print_flag = true;
         } else {
@@ -84,4 +88,6 @@ void imu_setup(void) {
     Serial.println("Check connections, and try again.");
     Serial.println();
   }
+
+  printTime = millis();
 }
