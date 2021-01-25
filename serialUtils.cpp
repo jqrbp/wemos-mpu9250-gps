@@ -71,6 +71,9 @@ void serial_loop(void) {
       case 'w':
         print_ip_address();
         break;
+      case 'b':
+        toggle_broadcast_serial_print_flag();
+        break;
       case 'i':
         toggle_serial_debug_imu_flag();
         break;

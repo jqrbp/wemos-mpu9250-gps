@@ -96,6 +96,7 @@ String H1 = "";
 String authentication_failed = "User authentication has failed.";
 const String file_credentials = R"(/credentials.txt)"; // LittleFS file name for the saved credentials
 const String change_creds =  "changecreds";            // Address for a credential change
+bool broadcast_serial_print_flag = false;
 
 void SSE_add_char(const char *c) {
   SSE_broadcast_string += c;
@@ -105,6 +106,10 @@ void set_SSE_broadcast_flag(bool flag) {
   SSE_broadcast_flag = flag;
 }
 
+void toggle_broadcast_serial_print_flag(void) {
+  broadcast_serial_print_flag = !broadcast_serial_print_flag;
+}
+
 void SSEBroadcastTxt(String txt) {
   for (uint8_t i = 0; i < SSE_MAX_CHANNELS; i++) {
     if (!(subscription[i].clientIP)) {
@@ -112,8 +117,10 @@ void SSEBroadcastTxt(String txt) {
     }
     String IPaddrstr = IPAddress(subscription[i].clientIP).toString();
     if (subscription[i].client.connected()) {
-      Serial.printf_P(PSTR("broadcast txt to client IP %s on channel %d with string: %s\n"),
-                      IPaddrstr.c_str(), i, txt.c_str());
+      if (broadcast_serial_print_flag) {
+        Serial.printf_P(PSTR("broadcast txt to client IP %s on channel %d with string: %s\n"),
+                        IPaddrstr.c_str(), i, txt.c_str());
+      }
       subscription[i].client.printf_P(PSTR("event: event\ndata: %s\n\n"), txt.c_str());
     }
     //  else {
