@@ -73,7 +73,7 @@ void GPS_UTIL::displayInfo()
     dtostrf(gps.location.lng(),4,8,longStr);
     String str = "{\"latitude\":" + String(latStr) + ",\"longitude\":" + String(longStr) + "}";
     SSEBroadcastTxt(str);
-    String fileStr = "#" + String(idx)+";"+String(latStr) + ", " + String(longStr) + ";";
+    String fileStr = "#" + String(idx, DEC)+";"+String(latStr) + ", " + String(longStr) + ";";
 
     Serial.print(F("Location: ")); 
     Serial.print(gps.location.lat(), 6);
