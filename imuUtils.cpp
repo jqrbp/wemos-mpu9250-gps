@@ -99,6 +99,7 @@ void imu_setup(void) {
     // DMP_FEATURE_LP_QUAT can also be used. It uses the 
     // accelerometer in low-power mode to estimate quat's.
     // DMP_FEATURE_LP_QUAT and 6X_LP_QUAT are mutually exclusive
+    imu.resetFifo();
   } else {
     Serial.println("Unable to communicate with MPU-9250");
     Serial.println("Check connections, and try again.");
