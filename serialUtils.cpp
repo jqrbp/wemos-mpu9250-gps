@@ -2,6 +2,7 @@
 #include "serialUtils.h"
 #include "imuUtils.h"
 #include "wifiUtils.h"
+#include "webUtils.h"
 #include "gpsUtilsWrapper.h"
 
 #define SERIALINLIM 16
