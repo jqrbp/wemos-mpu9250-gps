@@ -14,6 +14,7 @@
 #include <Ticker.h>
 #include <LittleFS.h>
 #include "fileUtils.h"
+#include "imuUtils.h"
 
 const unsigned int serverPort = 8080;
 
@@ -171,6 +172,10 @@ void handleNotFound(){
   digitalWrite(led, 0);
 }
 
+void handleCalib() {
+  imu_set_calib_flag(true);
+  replyOK();
+}
 /*
    Handle a file deletion request
    Operation      | req.responseText
@@ -494,6 +499,7 @@ void web_setup() {
   server.on("/creds" + change_creds,handlecredentialchange); //handles submission of credentials from the client
   server.on(F("/rest/events/subscribe"), handleSubscribe);
   server.on("/delete", handleFileDelete);
+  server.on("/calib", handleCalib);
   server.onNotFound(handleAll);
 
   server.begin();

@@ -80,6 +80,9 @@ void serial_loop(void) {
         break;
       case 'a':
         break;
+      case 'c':
+        imu_set_calib_flag(true);
+        break;
       case 's':
         parseCommand(serialData, 2, data, &dataLen);
         DEBUGPRINT("Data len:");DEBUGPRINTF(dataLen, HEX);

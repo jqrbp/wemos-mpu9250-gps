@@ -654,13 +654,45 @@ void MPU9250_DMP::computeEulerAngles(bool degrees)
 	}
 }
 
+float MPU9250_DMP::calcCompassHeadingTilt(float acc_x, float acc_y, float acc_z, float mag_x, float mag_y, float mag_z) {
+	double Y_r, X_r, X_h, Y_h, azimuth;
+	double cosY_r, sinY_r,cosX_r,sinX_r;
+
+	// pitch is along Y-Axis using XYZ rotation
+	Y_r = atan2((double)-acc_x, sqrt((long)acc_z*(long)acc_z + (long)acc_y*(long)acc_y));
+	// roll is along X-Axis
+	if(acc_z < 0) X_r = atan2((double)acc_y, -sqrt((long)acc_z*(long)acc_z  + (long)acc_x*(long)acc_x));
+	else X_r = atan2((double)acc_y, sqrt((long)acc_z*(long)acc_z  + (long)acc_x*(long)acc_x));
+	// // pitch = (double)_pitch; roll = (double)_roll;
+	
+	/* Calculate Azimuth:
+		* Magnetic horizontal components, after compensating for Roll(r) and Pitch(p) are:
+		* X_h = X*cos(p) + Y*sin(r)*sin(p) + Z*cos(r)*sin(p)
+		* Y_h = Y*cos(r) - Z*sin(r)
+		* Azimuth = arcTan(Y_h/X_h)
+		*/
+	cosY_r = cos(Y_r);
+	sinY_r = sin(Y_r);
+	cosX_r = cos(X_r);
+	sinX_r = sin(X_r);
+
+	X_h = (double)mag_x*cosY_r + (double)mag_y*sinX_r*sinY_r + (double)mag_z*cosX_r*sinY_r;
+	Y_h = (double)mag_y*cosX_r - (double)mag_z*sinX_r;
+	azimuth = atan2(Y_h, X_h);
+
+	if(azimuth < 0) {	/* Convert Azimuth in the range (0, 2pi) */
+		azimuth = 2*PI + azimuth;
+	}
+	return (float)azimuth;
+}
+
 float MPU9250_DMP::computeCompassHeading(void)
 {
 	if (my == 0)
 		heading = (mx < 0) ? PI : 0;
 	else
 		heading = atan2(mx, my);
-	
+
 	if (heading > PI) heading -= (2 * PI);
 	else if (heading < -PI) heading += (2 * PI);
 	else if (heading < 0) heading += 2 * PI;
