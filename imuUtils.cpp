@@ -9,9 +9,17 @@ float qw,qx,qy,qz;
 float ax,ay,az;
 float heading;
 
+int intPin = 14;
+
 bool print_flag = false;
 uint32_t printTime = 0;
 const uint32_t printTimeLimit = 500;
+bool serial_debug_imu_flag = true;
+bool imu_update_fail_flag = false;
+
+void toggle_serial_debug_imu_flag(void) {
+  serial_debug_imu_flag = !serial_debug_imu_flag;
+}
 
 void printIMUData(void)
 {  
@@ -31,7 +39,13 @@ void printIMUData(void)
     //           + String(imu.pitch) + ", " + String(imu.yaw));
     // Serial.println("Time: " + String(imu.time) + " ms");
     // Serial.println();
-    Serial.println("imu raw:"+String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az)+"," + String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz));
+    if (serial_debug_imu_flag) {
+      if (imu_update_fail_flag) {
+        Serial.println("imu fifo update failed");
+      } else {
+        Serial.println("imu raw:"+String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az)+"," + String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz));
+      }
+  }
   }
 }
 
@@ -61,9 +75,10 @@ void imu_loop(void) {
             ay = imu.calcAccel(imu.ay);
             az = imu.calcAccel(imu.az);
             
+            imu_update_fail_flag = false;
             print_flag = true;
         } else {
-          Serial.println("error: failed to dmp update fifo");
+          imu_update_fail_flag = true;
         }
     }
 
@@ -72,6 +87,7 @@ void imu_loop(void) {
 
 void imu_setup(void) {
   // Call imu.begin() to verify communication and initialize
+  pinMode(intPin, INPUT);
   if (imu.begin(4000000) == INV_SUCCESS)
   {
     Serial.println("\r\nStarting MPU-9250");

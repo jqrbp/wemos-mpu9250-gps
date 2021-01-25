@@ -49,13 +49,16 @@ void wifi_loop() {
         if (millis() - wifiInfoTxtTime > wifiInfoTxtTimeOut) {
             wifiInfoTxt = "{\"ip\":\"" + WiFi.localIP().toString() + "\"}";
             SSEBroadcastTxt(wifiInfoTxt);
-            Serial.println("");
-            Serial.println("WiFi connected");
-            Serial.println("IP address: ");
-            Serial.println(WiFi.localIP());
             wifiInfoTxtTime = millis();
         }
     }
     
     MDNS.update();
+}
+
+void print_ip_address(void) {
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
 }

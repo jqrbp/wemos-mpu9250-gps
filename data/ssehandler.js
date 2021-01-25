@@ -7,9 +7,10 @@ var eventListen = null;
 function getID(_str) {
     return document.getElementById(_str);
 }
+
 function getIr() {
     return irval;
-}  
+}
 
 function getRed() {
     return redval;
