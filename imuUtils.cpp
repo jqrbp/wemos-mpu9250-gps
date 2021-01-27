@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "SparkFunMPU9250-DMP.h"
 #include "webUtils.h"
+#include "fileUtils.h"
 
 MPU9250_DMP imu;
 static char imuTxtBuffer[140];
@@ -16,6 +17,7 @@ uint32_t printTime = 0;
 const uint32_t printTimeLimit = 500;
 bool serial_debug_imu_flag = true;
 bool imu_update_fail_flag = false;
+bool imu_update_fail_log_flag = true;
 
 //calibration variables
 bool magCalibFlag = false;
@@ -53,10 +55,14 @@ void printIMUData(void)
     if (serial_debug_imu_flag) {
       if (imu_update_fail_flag) {
         Serial.println("imu fifo update failed");
+        if (imu_update_fail_log_flag) {
+          appendFile("log.txt", "imu fifo update failed\r\n");
+          imu_update_fail_log_flag = false;
+        }
       } else {
         Serial.println("imu raw:"+String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az)+"," + String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz));
       }
-  }
+    }
   }
 }
 
@@ -148,9 +154,9 @@ void imu_loop(void) {
       magCal_nonblocking(magBias,magScale);
   } else {
     if (imu.updateCompass() == INV_SUCCESS) {
-      mx = imu.calcMag(imu.mx);
-      my = imu.calcMag(imu.my);
-      mz = imu.calcMag(imu.mz);
+      mx = (float)imu.mx - magBias[0] * magScale[0];// imu.calcMag(imu.mx);
+      my = (float)imu.my - magBias[1] * magScale[1];// imu.calcMag(imu.my);
+      mz = (float)imu.mz - magBias[2] * magScale[2];
     }
 
     // Check for new data in the FIFO

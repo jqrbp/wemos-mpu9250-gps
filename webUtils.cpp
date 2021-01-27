@@ -483,8 +483,6 @@ void handleSubscribe() {
 
 
 void web_setup() {
-  
-
   loadcredentials();
 
   time_t now = time(nullptr);

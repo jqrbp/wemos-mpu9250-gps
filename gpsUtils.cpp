@@ -58,6 +58,15 @@ void GPS_UTIL::begin(unsigned int baudRate) {
 
 void GPS_UTIL::displayInfo()
 {
+  static bool log_gps_datetime_flag = true;
+  if(log_gps_datetime_flag) {
+    if (gps.date.isValid() & gps.time.isValid())
+    {
+      String gpsValidDatetimeStr = "gps datetime:" + String(gps.date.year(),DEC)+"-"+String(gps.date.month(),DEC)+"-"+String(gps.date.day(),DEC)+"U"+String(gps.time.hour(),DEC)+":"+String(gps.time.minute(),DEC)+":"+String(gps.time.second(),DEC)+"\r\n";
+      appendFile("log.txt", gpsValidDatetimeStr.c_str());
+      log_gps_datetime_flag = false;
+    }
+  }
   if (gps.location.isValid()) {
 
     if (!latLongValid) latLongValid = true;
