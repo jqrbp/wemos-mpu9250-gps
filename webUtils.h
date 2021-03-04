@@ -3,6 +3,7 @@
 
 void SSE_add_char(const char *c);
 void set_SSE_broadcast_flag(bool flag);
+void toggle_broadcast_serial_print_flag(void);
 void SSEBroadcastTxt(String txt);
 void web_setup(void);
 void web_loop(void);

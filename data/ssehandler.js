@@ -7,9 +7,10 @@ var eventListen = null;
 function getID(_str) {
     return document.getElementById(_str);
 }
+
 function getIr() {
     return irval;
-}  
+}
 
 function getRed() {
     return redval;
@@ -121,6 +122,7 @@ function got_packet(msgdata) {
             }
             if(myJSON.h != undefined) {
                 getID("heading").value = myJSON.h
+                document.getElementById("compass-img").style.transform = 'rotate(' + (360 - myJSON.h) + 'deg)';
             }
         }
     }

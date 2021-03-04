@@ -3,6 +3,7 @@
 #include <WiFiClient.h>
 #include <ESP8266mDNS.h>
 #include "webUtils.h"
+#include "fileUtils.h"
 
 ESP8266WiFiMulti wifiMulti;
 
@@ -45,17 +46,27 @@ void wifi_setup() {
 }
 
 void wifi_loop() {
+    static bool wl_connected_info_log_flag = true;
     if (wifiMulti.run() == WL_CONNECTED) {
         if (millis() - wifiInfoTxtTime > wifiInfoTxtTimeOut) {
-            wifiInfoTxt = "{\"ip\":\"" + WiFi.localIP().toString() + "\"}";
+            wifiInfoTxt = "{\"ip\":\"" + WiFi.localIP().toString() + "\"}\r\n";
             SSEBroadcastTxt(wifiInfoTxt);
-            Serial.println("");
-            Serial.println("WiFi connected");
-            Serial.println("IP address: ");
-            Serial.println(WiFi.localIP());
             wifiInfoTxtTime = millis();
+            if (wl_connected_info_log_flag) {
+                appendFile("log.txt", wifiInfoTxt.c_str());
+                wl_connected_info_log_flag = false;
+            }
         }
+    } else {
+        wl_connected_info_log_flag = true;
     }
     
     MDNS.update();
+}
+
+void print_ip_address(void) {
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
 }

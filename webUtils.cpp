@@ -14,6 +14,7 @@
 #include <Ticker.h>
 #include <LittleFS.h>
 #include "fileUtils.h"
+#include "imuUtils.h"
 
 const unsigned int serverPort = 8080;
 
@@ -96,6 +97,7 @@ String H1 = "";
 String authentication_failed = "User authentication has failed.";
 const String file_credentials = R"(/credentials.txt)"; // LittleFS file name for the saved credentials
 const String change_creds =  "changecreds";            // Address for a credential change
+bool broadcast_serial_print_flag = false;
 
 void SSE_add_char(const char *c) {
   SSE_broadcast_string += c;
@@ -105,6 +107,10 @@ void set_SSE_broadcast_flag(bool flag) {
   SSE_broadcast_flag = flag;
 }
 
+void toggle_broadcast_serial_print_flag(void) {
+  broadcast_serial_print_flag = !broadcast_serial_print_flag;
+}
+
 void SSEBroadcastTxt(String txt) {
   for (uint8_t i = 0; i < SSE_MAX_CHANNELS; i++) {
     if (!(subscription[i].clientIP)) {
@@ -112,8 +118,10 @@ void SSEBroadcastTxt(String txt) {
     }
     String IPaddrstr = IPAddress(subscription[i].clientIP).toString();
     if (subscription[i].client.connected()) {
-      Serial.printf_P(PSTR("broadcast txt to client IP %s on channel %d with string: %s\n"),
-                      IPaddrstr.c_str(), i, txt.c_str());
+      if (broadcast_serial_print_flag) {
+        Serial.printf_P(PSTR("broadcast txt to client IP %s on channel %d with string: %s\n"),
+                        IPaddrstr.c_str(), i, txt.c_str());
+      }
       subscription[i].client.printf_P(PSTR("event: event\ndata: %s\n\n"), txt.c_str());
     }
     //  else {
@@ -164,6 +172,10 @@ void handleNotFound(){
   digitalWrite(led, 0);
 }
 
+void handleCalib() {
+  imu_set_calib_flag(true);
+  replyOK();
+}
 /*
    Handle a file deletion request
    Operation      | req.responseText
@@ -378,10 +390,10 @@ void SSEKeepAlive() {
     if (!(subscription[i].clientIP)) {
       continue;
     }
-    if (subscription[i].client.connected()) {
-      Serial.printf_P(PSTR("SSEKeepAlive - client is still listening on channel %d\n"), i);
-      subscription[i].client.println(F("event: event\ndata: { \"TYPE\":\"KEEP-ALIVE\" }\n"));   // Extra newline required by SSE standard
-    } else {
+    if (!subscription[i].client.connected()) {
+    //   Serial.printf_P(PSTR("SSEKeepAlive - client is still listening on channel %d\n"), i);
+    //   subscription[i].client.println(F("event: event\ndata: { \"TYPE\":\"KEEP-ALIVE\" }\n"));   // Extra newline required by SSE standard
+    // } else {
       Serial.printf_P(PSTR("SSEKeepAlive - client not listening on channel %d, remove subscription\n"), i);
       subscription[i].keepAliveTimer.detach();
       subscription[i].client.flush();
@@ -403,7 +415,7 @@ void SSEHandler(uint8_t channel) {
   }
   client.setNoDelay(true);
   client.setSync(true);
-  Serial.printf_P(PSTR("SSEHandler - registered client with IP %s is listening\n"), IPAddress(s.clientIP).toString().c_str());
+  // Serial.printf_P(PSTR("SSEHandler - registered client with IP %s is listening\n"), IPAddress(s.clientIP).toString().c_str());
   s.client = client; // capture SSE server client connection
   server.setContentLength(CONTENT_LENGTH_UNKNOWN); // the payload can go on forever
   server.sendContent_P(PSTR("HTTP/1.1 200 OK\nContent-Type: text/event-stream;\nConnection: keep-alive\nCache-Control: no-cache\nAccess-Control-Allow-Origin: *\n\n"));
@@ -462,17 +474,15 @@ void handleSubscribe() {
     }
   subscription[channel] = {clientIP, server.client(), Ticker()};
   SSEurl += channel;
-  Serial.printf_P(PSTR("Allocated channel %d, on uri %s\n"), channel, SSEurl.substring(offset).c_str());
-  //server.on(SSEurl.substring(offset), std::bind(SSEHandler, &(subscription[channel])));
-  Serial.printf_P(PSTR("subscription for client IP %s: event bus location: %s\n"), clientIP.toString().c_str(), SSEurl.c_str());
+  // Serial.printf_P(PSTR("Allocated channel %d, on uri %s\n"), channel, SSEurl.substring(offset).c_str());
+  // server.on(SSEurl.substring(offset), std::bind(SSEHandler, &(subscription[channel])));
+  // Serial.printf_P(PSTR("subscription for client IP %s: event bus location: %s\n"), clientIP.toString().c_str(), SSEurl.c_str());
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send_P(200, "text/plain", SSEurl.c_str());
 }
 
 
 void web_setup() {
-  
-
   loadcredentials();
 
   time_t now = time(nullptr);
@@ -487,6 +497,7 @@ void web_setup() {
   server.on("/creds" + change_creds,handlecredentialchange); //handles submission of credentials from the client
   server.on(F("/rest/events/subscribe"), handleSubscribe);
   server.on("/delete", handleFileDelete);
+  server.on("/calib", handleCalib);
   server.onNotFound(handleAll);
 
   server.begin();

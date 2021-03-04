@@ -621,6 +621,30 @@ float MPU9250_DMP::qToFloat(long number, unsigned char q)
 	return (number >> q) + ((number & mask) / (float) (2<<(q-1)));
 }
 
+float MPU9250_DMP::calcAzimuth(float Y_r, float X_r, float mag_x, float mag_y, float mag_z) {
+	float X_h, Y_h, azimuth;
+	float cosY_r, sinY_r,cosX_r,sinX_r;
+	/* Calculate Azimuth:
+		* Magnetic horizontal components, after compensating for Roll(r) and Pitch(p) are:
+		* X_h = X*cos(p) + Y*sin(r)*sin(p) + Z*cos(r)*sin(p)
+		* Y_h = Y*cos(r) - Z*sin(r)
+		* Azimuth = arcTan(Y_h/X_h)
+		*/
+	cosY_r = cos(Y_r);
+	sinY_r = sin(Y_r);
+	cosX_r = cos(X_r);
+	sinX_r = sin(X_r);
+
+	X_h = (double)mag_x*cosY_r + (double)mag_y*sinX_r*sinY_r + (double)mag_z*cosX_r*sinY_r;
+	Y_h = (double)mag_y*cosX_r - (double)mag_z*sinX_r;
+	azimuth = atan2(Y_h, X_h);
+
+	if(azimuth < 0) {	/* Convert Azimuth in the range (0, 2pi) */
+		azimuth = 2*PI + azimuth;
+	}
+	return (float)azimuth;
+}
+
 void MPU9250_DMP::computeEulerAngles(bool degrees)
 {
     float dqw = qToFloat(qw, 30);
@@ -652,6 +676,19 @@ void MPU9250_DMP::computeEulerAngles(bool degrees)
 		if (roll < 0) roll = 360.0 + roll;
 		if (yaw < 0) yaw = 360.0 + yaw;	
 	}
+}
+
+float MPU9250_DMP::calcCompassHeadingTilt(float acc_x, float acc_y, float acc_z, float mag_x, float mag_y, float mag_z) {
+	float Y_r, X_r;
+
+	// pitch is along Y-Axis using XYZ rotation
+	Y_r = atan2((float)-acc_x, sqrt((long)acc_z*(long)acc_z + (long)acc_y*(long)acc_y));
+	// roll is along X-Axis
+	if(acc_z < 0) X_r = atan2((float)acc_y, -sqrt((long)acc_z*(long)acc_z  + (long)acc_x*(long)acc_x));
+	else X_r = atan2((float)acc_y, sqrt((long)acc_z*(long)acc_z  + (long)acc_x*(long)acc_x));
+	// // pitch = (double)_pitch; roll = (double)_roll;
+	
+	return calcAzimuth(Y_r, X_r, mag_x, mag_y, mag_z);
 }
 
 float MPU9250_DMP::computeCompassHeading(void)

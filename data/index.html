@@ -14,18 +14,74 @@
         </div>
         <canvas id="c"></canvas>
         <div id="info">
-            <h3>Url</h3>
-            <input id="windowUrl"></input><button onclick="SSESubscribe()">Subscribe</button>
-            <h3>IP Address</h3><input id="ip"></input>
-            <h3>Coordinate</h3>
-            <input id="latitude" value="invalid"></input><input id="longitude" value="invalid"></input>
-            <h3>IMU Quaternion</h3>
-            <input id="qw" value="1"></input><input id="qx" value="0"></input><input id="qy" value="0"></input><input id="qz" value="0"></input>
-            <p><input type="text" name="qrw" id="qrw" value="1"><input type="text" name="qrx" id="qrx" value="0"><input type="text" name="qry" id="qry" value="0"><input type="text" name="qrz" id="qrz" value="0"></p>
-            <h3>IMU RPY</h3>
-            <input id="roll" value="invalid"></input><input id="pitch" value="invalid"></input><input id="yaw" value="invalid"></input><input id="heading" value="invalid"></input>
-            <h3>IMU Accel</h3>
-            <input id="ax" value="invalid"></input><input id="ay" value="invalid"></input><input id="az" value="invalid"></input>
+            <table>
+                <tr>
+					<td>Url</td>
+                    <td><input id="windowUrl"></input></td>
+                    <td><button onclick="SSESubscribe()">Subscribe</button></td>
+                    <td></td>
+                    <td></td>
+				</tr>
+                <tr>
+					<td>IP Address</td>
+                    <td><input id="ip"></input></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+				</tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr>
+					<td>Quaternion</td>
+                    <td><input id="qw" value="1"></input></td>
+                    <td><input id="qx" value="0"></input></td>
+                    <td><input id="qy" value="0"></input></td>
+                    <td><input id="qz" value="0"></input></td>
+				</tr>
+                <tr>
+					<td>R Quat</td>
+                    <td><input id="qrw" value="1"></input></td>
+                    <td><input id="qrx" value="0"></input></td>
+                    <td><input id="qry" value="0"></input></td>
+                    <td><input id="qrz" value="0"></input></td>
+				</tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr>
+					<td>RPY</td>
+                    <td><input id="roll" value="invalid"></input></td>
+                    <td><input id="pitch" value="invalid"></input></td>
+                    <td><input id="yaw" value="invalid"></input></td>
+                    <td></td>
+				</tr>
+                <tr>
+					<td>Accel</td>
+                    <td><input id="ax" value="invalid"></input></td>
+                    <td><input id="ay" value="invalid"></input></td>
+                    <td><input id="az" value="invalid"></input></td>
+                    <td></td>
+				</tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr>
+					<td>LatLong</td>
+                    <td><input id="latitude" value="latitude"></input></td>
+                    <td><input id="longitude" value="longitude"></input></td>
+                    <td></td>
+                    <td></td>
+				</tr>
+                <tr>
+					<td>Heading</td>
+                    <td><input id="heading" value="invalid"></input></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+				</tr>
+            </table>
+        </div>
+        <div id="compass">
+            <img id="compass-img" src="/assets/compass_rose.svg" alt="Compass">
+            <img id="compass-ind" src="/assets/compass_indicator.png">
         </div>
         <div id="container">
         </div>

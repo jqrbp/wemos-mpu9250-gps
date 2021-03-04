@@ -9,7 +9,19 @@
     user-select: none;
     z-index: 1;
 }
-
+#compass-img{
+    width: 300px;
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+}
+#compass-ind{
+    width: 120px;
+    height: 200px;
+    position: absolute;
+    left: 110px;
+    bottom: 105px;
+}
 #loader {
     position: absolute;
     top: calc(50% - 120px);

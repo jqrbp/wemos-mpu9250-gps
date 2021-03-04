@@ -26,16 +26,16 @@ void fs_setup() {
 }
 
 void appendFile(const char * path, const char * message) {
-  Serial.printf("Appending to file: %s\n", path);
+  // Serial.printf("Appending to file: %s\n", path);
 
   File file = fileSystem->open(path, "a");
   if (!file) {
     Serial.println("Failed to open file for appending");
     return;
   }
-  if (file.print(message)) {
-    Serial.println("Message appended");
-  } else {
+  if (!file.print(message)) {
+  //   Serial.println("Message appended");
+  // } else {
     Serial.println("Append failed");
   }
   file.close();

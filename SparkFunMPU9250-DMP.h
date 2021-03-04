@@ -364,6 +364,17 @@ public:
 	// Output: class variables roll, pitch, and yaw will be updated on exit.	
 	void computeEulerAngles(bool degrees = true);
 	
+	// calcAzimuth -- Compute azimuth / heading with tilt compensation
+	// Input: pitch and roll in radian and 3-axis magnetometer values
+	// Output: azimuth / heading based on tilt compensation
+	float calcAzimuth(float Y_r, float X_r, float mag_x, float mag_y, float mag_z);
+
+	// calcCompassHeadingTilt -- Compute heading based on most recently read mx, my, and mz values
+	//                           with tilt compensation based on accelerometer values
+	// Input: float of 3-axis accelerometer and 3-axis magnetometer
+	// Output: class variable heading will be updated on exit
+	float calcCompassHeadingTilt(float acc_x, float acc_y, float acc_z, float mag_x, float mag_y, float mag_z);
+
 	// computeCompassHeading -- Compute heading based on most recently read mx, my, and mz values
 	// Output: class variable heading will be updated on exit
 	float computeCompassHeading(void);
