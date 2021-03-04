@@ -697,7 +697,7 @@ float MPU9250_DMP::computeCompassHeading(void)
 		heading = (mx < 0) ? PI : 0;
 	else
 		heading = atan2(mx, my);
-	
+
 	if (heading > PI) heading -= (2 * PI);
 	else if (heading < -PI) heading += (2 * PI);
 	else if (heading < 0) heading += 2 * PI;

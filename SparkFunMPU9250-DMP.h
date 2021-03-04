@@ -379,6 +379,8 @@ public:
 	// Output: class variable heading will be updated on exit
 	float computeCompassHeading(void);
 	
+	float calcCompassHeadingTilt(float acc_x, float acc_y, float acc_z, float mag_x, float mag_y, float mag_z);
+
 	// selfTest -- Run gyro and accel self-test.
 	// Output: Returns bit mask, 1 indicates success. A 0x7 is success on all sensors.
 	//         Bit pos 0: gyro
