@@ -41,6 +41,20 @@ void appendFile(const char * path, const char * message) {
   file.close();
 }
 
+void writeFile(const char * path, const char * message) {
+   File file = fileSystem->open(path, "w");
+  if (!file) {
+    Serial.println("Failed to open file for appending");
+    return;
+  }
+  if (!file.print(message)) {
+  //   Serial.println("Message appended");
+  // } else {
+    Serial.println("Append failed");
+  }
+  file.close();
+}
+
 void deleteRecursive(const char *path) {
   String pathStr = "";
   File file = fileSystem->open(path, "r");

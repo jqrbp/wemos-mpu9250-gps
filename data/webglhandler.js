@@ -57,6 +57,30 @@ function initAxes() {
    scene.add(zAxis);
 }
 
+var geometry = new THREE.BufferGeometry();
+var positions = [];
+var colors = [];
+var color = new THREE.Color();
+var points;
+
+function addpoints(_x, _y, _z, _max) {
+   positions.push( _x, _y, _z );
+   // colors
+   var vx = ( _x / _max ) + 0.5;
+   var vy = ( _y / _max ) + 0.5;
+   var vz = ( _z / _max ) + 0.5;
+   color.setRGB( vx, vy, vz );
+   colors.push( color.r, color.g, color.b );
+
+   geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+   geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+   geometry.computeBoundingSphere();
+
+   var material = new THREE.PointsMaterial( { size: 15, vertexColors: THREE.VertexColors } );
+   points = new THREE.Points( geometry, material );
+   scene.add( points );
+}
+
 function webgl_start() { 
    var canvas = document.getElementById("c");
 

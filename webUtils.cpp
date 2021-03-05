@@ -176,6 +176,11 @@ void handleCalib() {
   imu_set_calib_flag(true);
   replyOK();
 }
+
+void handleGetMagCalib() {
+  imu_send_mag_calib();
+  replyOK();
+}
 /*
    Handle a file deletion request
    Operation      | req.responseText
@@ -498,6 +503,7 @@ void web_setup() {
   server.on(F("/rest/events/subscribe"), handleSubscribe);
   server.on("/delete", handleFileDelete);
   server.on("/calib", handleCalib);
+  server.on("/get/magcalib", handleGetMagCalib);
   server.onNotFound(handleAll);
 
   server.begin();

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "SparkFunMPU9250-DMP.h"
 #include "webUtils.h"
+#include <LittleFS.h>
 #include "fileUtils.h"
 
 MPU9250_DMP imu;
@@ -27,6 +28,7 @@ uint32_t magCalibDT = 0;
 uint16_t magCalibIdx = 0;
 uint16_t magRate = 8;
 
+char magCalibParamFile[18] = "magCalibParam.txt";
 float magBias[3] = {-52.0f, 322.0f, -165.0f};
 float magScale[3] = {1.03, 0.95, 1.03};
 int16_t mag_max[3] = {-32767, -32767, -32767}, mag_min[3] = {32767, 32767, 32767}, mag_temp[3] = {0, 0, 0};
@@ -107,12 +109,18 @@ int magCal_nonblocking(float * dest1, float * dest2) {
 					if(mag_temp[jj] > mag_max[jj]) mag_max[jj] = mag_temp[jj];
 					if(mag_temp[jj] < mag_min[jj]) mag_min[jj] = mag_temp[jj];
 				}
-				Serial.println(".");
+				Serial.print(".");
 				if(magRate <= 10) magCalibDT = 135;  // at 8 Hz ODR, new mag data is available every 125 ms
 				else magCalibDT = 12;  // at 100 Hz ODR, new mag data is available every 10 ms
-				magCalibIdx++;
+				
+        sprintf(imuTxtBuffer,  "{\"mcx\":%lu,\"mci\":%lu,\"mvx\":%d,\"mvy\":%d,\"mvz\":\"%d\"}", 
+          sample_count, magCalibIdx, mag_temp[0], mag_temp[1], mag_temp[2]);
+        SSEBroadcastTxt(imuTxtBuffer);
+
+        magCalibIdx++;
 				magCalibTime = millis();
 			} else {
+        Serial.println(".");
 				//    Serial.println("mag x min/max:"); Serial.println(mag_max[0]); Serial.println(mag_min[0]);
 				//    Serial.println("mag y min/max:"); Serial.println(mag_max[1]); Serial.println(mag_min[1]);
 				//    Serial.println("mag z min/max:"); Serial.println(mag_max[2]); Serial.println(mag_min[2]);
@@ -141,14 +149,27 @@ int magCal_nonblocking(float * dest1, float * dest2) {
 				Serial.println("Mag Calibration done!");
 				Serial.print("bias: "); Serial.print(dest1[0]); Serial.print(", "); Serial.print(dest1[1]); Serial.print(", "); Serial.print(dest1[2]); Serial.println();
         Serial.print("scale: "); Serial.print(dest2[0]); Serial.print(", "); Serial.print(dest2[1]); Serial.print(", "); Serial.print(dest2[2]); Serial.println();
-				magCalibFlag = false;
+				sprintf(imuTxtBuffer,  "{\"mbx\":%.2f,\"mby\":%.2f,\"mbz\":\"%.2f\",\"msx\":%.2f,\"msy\":%.2f,\"msz\":\"%.2f\"}", 
+          dest1[0], dest1[1], dest1[2], dest2[0], dest2[1], dest2[2]);
+        SSEBroadcastTxt(imuTxtBuffer);
+        sprintf(imuTxtBuffer,  "%d\n%d\n%d\n%d\n%d\n%d\n", 
+          (int)(dest1[0] * 10000.0f), (int)(dest1[1] * 10000.0f), (int)(dest1[2] * 10000.0f), 
+          (int)(dest2[0] * 10000.0f), (int)(dest2[1] * 10000.0f), (int)(dest2[2] * 10000.0f));
+        writeFile(magCalibParamFile, imuTxtBuffer);
+        magCalibFlag = false;
 				magCalibTime = 0;
 				magCalibIdx = 0;
 			}
 		}
 	}
 	return 0;
-}  
+}
+
+void imu_send_mag_calib(void) {
+  sprintf(imuTxtBuffer,  "{\"mbx\":%.2f,\"mby\":%.2f,\"mbz\":\"%.2f\",\"msx\":%.2f,\"msy\":%.2f,\"msz\":\"%.2f\"}", 
+          magBias[0], magBias[1], magBias[2], magScale[0], magScale[1], magScale[2]);
+  SSEBroadcastTxt(imuTxtBuffer);
+}
 
 void imu_loop(void) {
   if (magCalibFlag) {
@@ -238,6 +259,30 @@ void printIMUDataRaw(void)
 }
 
 void imu_setup(void) {
+  // get magBias and magScale value from file
+  File f;
+  f=LittleFS.open(magCalibParamFile,"r");
+  if(f){
+    Serial.println("Loading magnetometer calibration parameter from file system.");
+    String mod=f.readString(); //read the file to a String
+    int index_1=mod.indexOf('\n',0); //locate the first line break
+    int index_2=mod.indexOf('\n',index_1+1); //locate the second line break
+    int index_3=mod.indexOf('\n',index_2+1); //locate the third line break
+
+    magBias[0]=(float)mod.substring(0,index_1-1).toInt() / 10000.0f;
+    magBias[1]=(float)mod.substring(index_1+1,index_2-1).toInt() / 10000.0f;
+    magBias[2]=(float)mod.substring(index_2+1,index_3-1).toInt() / 10000.0f;
+
+    index_1=mod.indexOf('\n',index_3+1);
+    index_2=mod.indexOf('\n',index_1+1);
+    index_3=mod.indexOf('\n',index_2+1);
+
+    magScale[0]=(float)mod.substring(0,index_1-1).toInt() / 10000.0f;
+    magScale[1]=(float)mod.substring(index_1+1,index_2-1).toInt() / 10000.0f;
+    magScale[2]=(float)mod.substring(index_2+1,index_3-1).toInt() / 10000.0f;
+    f.close();
+  }
+
   // Call imu.begin() to verify communication and initialize
   pinMode(intPin, INPUT_PULLUP);
   if (imu.begin(400000) == INV_SUCCESS)

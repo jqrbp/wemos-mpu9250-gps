@@ -25,12 +25,12 @@
                 <tr>
 					<td>IP Address</td>
                     <td><input id="ip"></input></td>
-                    <td></td>
-                    <td></td>
+                    <td><button onclick="HideInfo()">Hide Info</button></td>
+                    <td><button onclick="ShowInfo()">Show Info</button></td>
                     <td></td>
 				</tr>
-                <tr><td></td><td></td><td></td><td></td><td></td></tr>
-                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+            </table>
+            <table id="tableInfo">
                 <tr>
 					<td>Quaternion</td>
                     <td><input id="qw" value="1"></input></td>
@@ -49,9 +49,9 @@
                 <tr><td></td><td></td><td></td><td></td><td></td></tr>
                 <tr>
 					<td>RPY</td>
-                    <td><input id="roll" value="invalid"></input></td>
-                    <td><input id="pitch" value="invalid"></input></td>
-                    <td><input id="yaw" value="invalid"></input></td>
+                    <td><input id="r" value="invalid"></input></td>
+                    <td><input id="p" value="invalid"></input></td>
+                    <td><input id="y" value="invalid"></input></td>
                     <td></td>
 				</tr>
                 <tr>
@@ -63,6 +63,30 @@
 				</tr>
                 <tr><td></td><td></td><td></td><td></td><td></td></tr>
                 <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>MAGNETOMETER</td><td></td><td></td><td></td><td></td></tr>
+                <tr>
+					<td>Mag Values</td>
+                    <td><input type="text" name="mvx" id="mvx" value="0"></td>
+                    <td><input type="text" name="mvy" id="mvy" value="0"></td>
+                    <td><input type="text" name="mvz" id="mvz" value="0"></td>
+                    <td><button onclick="ReadMagParam()">Read Mag Param</button></td>
+				</tr>
+                <tr>
+					<td>Mag Bias</td>
+                    <td><input type="text" name="mbx" id="mbx" value="0"></td>
+                    <td><input type="text" name="mby" id="mby" value="0"></td>
+                    <td><input type="text" name="mbz" id="mbz" value="0"></td>
+                    <td><button onclick="MagCalibrate()">Calibrate</button></td>
+				</tr>
+                <tr>
+					<td>Mag Scale</td>
+                    <td><input type="text" name="msx" id="msx" value="0"></td>
+                    <td><input type="text" name="msy" id="msy" value="0"></td>
+                    <td><input type="text" name="msz" id="msz" value="0"></td>
+                    <td><input id="stat" value="stat"></input></td>
+				</tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td></td></tr>
                 <tr>
 					<td>LatLong</td>
                     <td><input id="latitude" value="latitude"></input></td>
@@ -71,7 +95,7 @@
                     <td></td>
 				</tr>
                 <tr>
-					<td>Heading</td>
+					<td>Compass</td>
                     <td><input id="heading" value="invalid"></input></td>
                     <td></td>
                     <td></td>
@@ -80,14 +104,14 @@
             </table>
         </div>
         <div id="compass">
-            <img id="compass-img" src="/assets/compass_rose.svg" alt="Compass">
             <img id="compass-ind" src="/assets/compass_indicator.png">
+            <img id="compass-img" src="/assets/compass_rose.png" alt="Compass">
         </div>
         <div id="container">
         </div>
         <div id="log">
             <h3>Log&nbsp;<button onclick="clearLog()">Clear</button></h3>
-            <textarea id=r readonly rows=40 style="min-width: 100%;"></textarea>
+            <textarea id=lr readonly rows=40 style="min-width: 100%;"></textarea>
         </div>
         <script src="OrbitControls.js"></script>
 	    <script src="webglhandler.js"></script>

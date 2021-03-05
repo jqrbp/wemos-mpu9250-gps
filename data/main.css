@@ -10,17 +10,17 @@
     z-index: 1;
 }
 #compass-img{
+    width: 250px;
+    position: absolute;
+    left: 45px;
+    bottom: 45px;
+}
+#compass-ind{
     width: 300px;
+    height: 300px;
     position: absolute;
     left: 20px;
     bottom: 20px;
-}
-#compass-ind{
-    width: 120px;
-    height: 200px;
-    position: absolute;
-    left: 110px;
-    bottom: 105px;
 }
 #loader {
     position: absolute;

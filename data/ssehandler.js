@@ -3,6 +3,7 @@ var myJSON;
 var redval = 0;
 var irval = 0;
 var eventListen = null;
+var calibmag = false;
 
 function getID(_str) {
     return document.getElementById(_str);
@@ -45,20 +46,31 @@ function get_appropriate_ws_url(extra_url)
     return pcol + p[0] + ":81" + "/" + extra_url;
 }
 
-function isJSONHRValid(_str) {
-    myJSON = null;
-    try {
-        myJSON = JSON.parse(_str.trim());
-    } catch (e) {
-        console.log("failed to parse json: " + e);
-        return false;
-    }
+function chkMyJSON(_val) {
+	if(myJSON == null) return false;
+	if(myJSON == undefined) return false;
+	if(myJSON[_val] == null) return false;
+	if(myJSON[_val] == undefined) return false;
+	return true;
+}
 
-    // if(myJSON.value == undefined) return false;
-    // if(myJSON.latitude == undefined) return false;
-    // if(myJSON.longitude == undefined) return false;
+function loadMyJson(_str) {
+	myJSON = null;
+	try {
+		myJSON = JSON.parse(_str);
+	} catch (e) {
+		return false;
+	}
 
-    return true;
+	return true;
+}
+
+function setMyJson(_val) {
+	if(chkMyJSON(_val)) {
+		getID(_val).value = myJSON[_val];
+		return true;
+	}
+	return false;
 }
 
 function got_packet(msgdata) {
@@ -76,53 +88,37 @@ function got_packet(msgdata) {
             s = s + ring[n];
             n = (n + 1) % 50;
         } while (n !== head);
-        getID("r").value = s; 
-        getID("r").scrollTop =
-        getID("r").scrollHeight;
+        getID("lr").value = s; 
+        getID("lr").scrollTop =
+        getID("lr").scrollHeight;
 
-        if (isJSONHRValid(msgjson[i] + "}")) {
-            if(myJSON.latitude != undefined) {
-                getID("latitude").value = myJSON.latitude
-            }
-            if(myJSON.longitude != undefined) {
-                getID("longitude").value = myJSON.longitude
-            }
-            if(myJSON.ip != undefined) {
-                getID("ip").value = myJSON.ip
-            }
-            if(myJSON.qw != undefined) {
-                getID("qw").value = myJSON.qw
-            }
-            if(myJSON.qx != undefined) {
-                getID("qx").value = myJSON.qx
-            }
-            if(myJSON.qy != undefined) {
-                getID("qy").value = myJSON.qy
-            }
-            if(myJSON.qz != undefined) {
-                getID("qz").value = myJSON.qz
-            }
-            if(myJSON.r != undefined) {
-                getID("roll").value = myJSON.r
-            }
-            if(myJSON.p != undefined) {
-                getID("pitch").value = myJSON.p
-            }
-            if(myJSON.y != undefined) {
-                getID("yaw").value = myJSON.y
-            }
-            if(myJSON.ax != undefined) {
-                getID("ax").value = myJSON.ax
-            }
-            if(myJSON.ay != undefined) {
-                getID("ay").value = myJSON.ay
-            }
-            if(myJSON.az != undefined) {
-                getID("az").value = myJSON.az
-            }
-            if(myJSON.h != undefined) {
+        if (loadMyJson(msgjson[i] + "}")) {
+            setMyJson("ip");
+
+            //object quaternion
+			setMyJson("qw"); setMyJson("qx"); setMyJson("qy"); setMyJson("qz");
+            setMyJson("r"); setMyJson("p"); setMyJson("y");
+            setMyJson("ax"); setMyJson("ay"); setMyJson("az");
+            setMyJson("latitude"); setMyJson("longitude");
+
+            if(chkMyJSON("h")) {
                 getID("heading").value = myJSON.h
-                document.getElementById("compass-img").style.transform = 'rotate(' + (360 - myJSON.h) + 'deg)';
+                document.getElementById("compass-img").style.transform = 'rotate(' + (myJSON.h - 360 ) + 'deg)';
+            }
+
+            //magnetometer values
+            setMyJson("mvx"); setMyJson("mvy"); setMyJson("mvz"); 
+
+            //magnetometer calibration
+            setMyJson("mbx"); setMyJson("mby"); setMyJson("mbz"); 
+            setMyJson("msx"); setMyJson("msy"); setMyJson("msz");
+
+            if(chkMyJSON("mcx")) {
+                if(chkMyJSON("mci")) {
+                    addpoints(myJSON.mvx/3, myJSON.mvy/3, myJSON.mvz/3, myJSON.mcx);
+                    document.getElementById("stat").value = "calibno:" + myJSON.mci + "/" + myJSON.mcx;
+                    if(myJSON.mci >= myJSON.mcx - 2) calibmag = false;
+                }
             }
         }
     }
@@ -166,12 +162,34 @@ function httpGetAsync(theUrl, callback)
 }
 
 function clearLog() {
-    getID("r").value = "";
+    getID("lr").value = "";
     tail = head;
+}
+
+function MagCalibrateReqCallback(responseText) {
+    console.log(responseText);
+}
+
+function ReadMagParam() {
+    httpGetAsync(getID("windowUrl").value + "get/magcalib", MagCalibrateReqCallback);
+}
+
+function MagCalibrate() {
+    calibmag = true;
+    httpGetAsync(getID("windowUrl").value + "calib", MagCalibrateReqCallback);
+}
+
+function HideInfo() {
+    getID("tableInfo").hidden = true;
+}
+
+function ShowInfo() {
+    getID("tableInfo").hidden = false;
 }
 
 document.addEventListener("DOMContentLoaded", function() {
     getID("windowUrl").value = document.URL;
     httpGetAsync(getID("windowUrl").value + "rest/events/subscribe", SSESubscribeCallback);
+    HideInfo();
     webgl_start();
 }, true);
