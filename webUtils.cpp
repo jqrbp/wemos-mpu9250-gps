@@ -466,7 +466,11 @@ void handleSubscribe() {
   uint8_t channel;
   IPAddress clientIP = server.client().remoteIP();   // get IP address of client
   String SSEurl = F("http://");
-  SSEurl += WiFi.localIP().toString();
+  if (clientIP.toString().startsWith("192.168.4.")) {
+    SSEurl += "192.168.4.1";
+  } else {
+    SSEurl += WiFi.localIP().toString();
+  }
   SSEurl += F(":");
   SSEurl += serverPort;
   size_t offset = SSEurl.length();
