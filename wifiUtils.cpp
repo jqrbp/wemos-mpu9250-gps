@@ -7,7 +7,7 @@
 
 ESP8266WiFiMulti wifiMulti;
 
-const uint8_t ssidNum = 2;
+const uint8_t ssidNum = 0;
 const char* ssid[] = { "wifirouter1", "wifirouter2"};
 const char* ssid_passwd[] = { "wifirouter1pass", "wifirouter2pass" };
 
@@ -48,18 +48,20 @@ void wifi_setup() {
 
 void wifi_loop() {
     static bool wl_connected_info_log_flag = true;
-    if (wifiMulti.run() == WL_CONNECTED) {
-        if (millis() - wifiInfoTxtTime > wifiInfoTxtTimeOut) {
-            wifiInfoTxt = "{\"ip\":\"" + WiFi.localIP().toString() + "\"}\r\n";
-            SSEBroadcastTxt(wifiInfoTxt);
-            wifiInfoTxtTime = millis();
-            if (wl_connected_info_log_flag) {
-                appendFile("log.txt", wifiInfoTxt.c_str());
-                wl_connected_info_log_flag = false;
+    if (ssidNum > 0) {
+        if (wifiMulti.run() == WL_CONNECTED) {
+            if (millis() - wifiInfoTxtTime > wifiInfoTxtTimeOut) {
+                wifiInfoTxt = "{\"ip\":\"" + WiFi.localIP().toString() + "\"}\r\n";
+                SSEBroadcastTxt(wifiInfoTxt);
+                wifiInfoTxtTime = millis();
+                if (wl_connected_info_log_flag) {
+                    appendFile("log.txt", wifiInfoTxt.c_str());
+                    wl_connected_info_log_flag = false;
+                }
             }
+        } else {
+            wl_connected_info_log_flag = true;
         }
-    } else {
-        wl_connected_info_log_flag = true;
     }
     
     MDNS.update();

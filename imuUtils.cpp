@@ -204,8 +204,12 @@ void imu_loop(void) {
             ay = imu.calcAccel(imu.ay);
             az = imu.calcAccel(imu.az);
 
-            fHeading[1] = imu.calcCompassHeadingTilt(-imu.ay, imu.ax, imu.az, mx, -my, mz);
-            // fHeading[1] = imu.calcAzimuth(imu.pitch, imu.roll, mx, my, mz);
+            // // heading in x direction
+            // fHeading[1] = imu.calcCompassHeadingTilt(-imu.ay, imu.ax, imu.az, mx, -my, mz);
+            // fHeading[1]*= 180.0 / PI;
+            
+            // heading in y direction
+            fHeading[1] = imu.calcCompassHeadingTilt(imu.ax, -imu.ay, -imu.az, my, -mx, -mz);
             fHeading[1]*= 180.0 / PI;
             
             if(fHeading[1] - fHeading[0] > 180.0f) {
