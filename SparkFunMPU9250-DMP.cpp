@@ -678,21 +678,20 @@ void MPU9250_DMP::computeEulerAngles(bool degrees)
 	}
 }
 
-float MPU9250_DMP::calcCompassHeadingTiltY(float acc_x, float acc_y, float acc_z, float mag_x, float mag_y, float mag_z) {
+float MPU9250_DMP::calcCompassHeadingTilt(float acc_x, float acc_y, float acc_z, float mag_x, float mag_y, float mag_z) {
 	float Y_r, X_r;
 
 	// pitch is along Y-Axis using XYZ rotation
-	if(acc_z < 0) Y_r = atan2((float)-acc_x, sqrt((long)acc_z*(long)acc_z + (long)acc_y*(long)acc_y));
-	else Y_r = atan2((float)-acc_x, -sqrt((long)acc_z*(long)acc_z + (long)acc_y*(long)acc_y));
-	
+	Y_r = atan2((float)-acc_x, sqrt((long)acc_z*(long)acc_z + (long)acc_y*(long)acc_y));
 	// roll is along X-Axis
-	X_r = atan2((float)acc_y, -sqrt((long)acc_z*(long)acc_z  + (long)acc_x*(long)acc_x));
+	if(acc_z >= 0) X_r = atan2((float)acc_y, -sqrt((long)acc_z*(long)acc_z  + (long)acc_x*(long)acc_x));
+	else X_r = atan2((float)acc_y, sqrt((long)acc_z*(long)acc_z  + (long)acc_x*(long)acc_x));
 	// // pitch = (double)_pitch; roll = (double)_roll;
 	
 	return calcAzimuth(Y_r, X_r, mag_x, mag_y, mag_z);
 }
 
-float MPU9250_DMP::calcCompassHeadingTilt(float acc_x, float acc_y, float acc_z, float mag_x, float mag_y, float mag_z) {
+float MPU9250_DMP::calcCompassHeadingTiltY(float acc_x, float acc_y, float acc_z, float mag_x, float mag_y, float mag_z) {
 	float Y_r, X_r;
 
 	// pitch is along Y-Axis using XYZ rotation

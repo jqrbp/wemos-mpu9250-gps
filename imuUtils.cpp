@@ -63,7 +63,7 @@ void printIMUData(void)
           imu_update_fail_log_flag = false;
         }
       } else {
-        Serial.println("imu raw:"+String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az) + ";" + String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz)+"," + String(update_compass_flag) +"\t" + String(fHeading[0], 2));
+        Serial.println("imu raw:"+ String(imu.roll) + "," + String(imu.pitch) + "," + String(imu.yaw) + "\t" + String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az) + ";" + String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz)+"," + String(update_compass_flag) +"\t" + String(fHeading[0], 2));
       }
     }
   }
@@ -205,12 +205,13 @@ void imu_loop(void) {
             az = imu.calcAccel(imu.az);
 
             // // heading in x direction
-            // fHeading[1] = imu.calcCompassHeadingTilt(-imu.ay, imu.ax, imu.az, mx, -my, mz);
+            // fHeading[1] = imu.calcCompassHeadingTiltY(-imu.ay, imu.ax, imu.az, mx, -my, mz);
             // fHeading[1]*= 180.0 / PI;
             
             // heading in y direction
-            fHeading[1] = imu.calcCompassHeadingTilt(imu.ax, -imu.ay, -imu.az, my, -mx, -mz);
+            fHeading[1] = imu.calcCompassHeadingTilt(imu.ax, -imu.ay, imu.az, my, -mx, -mz);
             fHeading[1]*= 180.0 / PI;
+            fHeading[1]-= 90.0f;
             
             if(fHeading[1] - fHeading[0] > 180.0f) {
               fHeading[0] += 360;
