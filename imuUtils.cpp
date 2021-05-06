@@ -3,12 +3,16 @@
 #include "webUtils.h"
 #include <LittleFS.h>
 #include "fileUtils.h"
+extern "C" {
+#include "quaternion.h"
+}
 
 MPU9250_DMP imu;
 static char imuTxtBuffer[140];
 
 float qw,qx,qy,qz;
 float ax,ay,az, mx, my, mz;
+vector3d_t dmpEuler;
 float fHeading[2];
 
 int intPin = 14;
@@ -42,7 +46,7 @@ void printIMUData(void)
   if (millis() - printTime > printTimeLimit) {
     if (print_flag) {
       sprintf(imuTxtBuffer, "{\"qw\":%.4f,\"qx\":%.4f,\"qy\":%.4f,\"qz\":%.4f,\"r\":%.2f,\"p\":%.2f,\"y\":%.2f,\"ax\":%.4f,\"ay\":%.4f,\"az\":%.4f,\"h\":%.2f}", 
-        qw, qx, qy, qz, imu.roll, imu.pitch, imu.yaw, ax, ay, az, fHeading[0]);
+        qw, qx, qy, qz, (float)dmpEuler[VEC3_X], (float)dmpEuler[VEC3_Y], (float)dmpEuler[VEC3_Z], ax, ay, az, fHeading[0]);
       SSEBroadcastTxt(imuTxtBuffer);
       print_flag = false;
     }
@@ -63,7 +67,7 @@ void printIMUData(void)
           imu_update_fail_log_flag = false;
         }
       } else {
-        Serial.println("imu raw:"+ String(imu.roll) + "," + String(imu.pitch) + "," + String(imu.yaw) + "\t" + String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az) + ";" + String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz)+"," + String(update_compass_flag) +"\t" + String(fHeading[0], 2));
+        Serial.println("imu raw:"+ String(dmpEuler[VEC3_X]) + "," + String(dmpEuler[VEC3_Y]) + "," + String(dmpEuler[VEC3_Z]) + "\t" + String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az) + ";" + String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz)+"," + String(update_compass_flag) +"\t" + String(fHeading[0], 2));
       }
     }
   }
@@ -171,6 +175,73 @@ void imu_send_mag_calib(void) {
   SSEBroadcastTxt(imuTxtBuffer);
 }
 
+int imu_calcHeading(void) {
+  vector3d_t fusedEuler;
+  quaternion_t dmpQuat;
+	quaternion_t magQuat;
+	quaternion_t unfusedQuat;
+	float deltaDMPYaw;
+	float deltaMagYaw;
+	double magYaw;
+	float newYaw;
+
+  // // heading in x direction
+  // fHeading[1] = imu.calcCompassHeadingTiltY(-imu.ay, imu.ax, imu.az, mx, -my, mz);
+  // fHeading[1]*= 180.0 / PI;
+
+  // heading in y direction
+  // fHeading[1] = imu.calcCompassHeadingTilt(imu.ax, -imu.ay, imu.az, my, -mx, -mz);
+  // fHeading[1] = imu.calcAzimuth((double)imu.pitch, (double)imu.roll, my, mx, mz);
+
+  qw = imu.calcQuat(imu.qw);
+  qx = imu.calcQuat(imu.qx);
+  qy = imu.calcQuat(imu.qy);
+  qz = imu.calcQuat(imu.qz);
+
+  ax = imu.calcAccel(imu.ax);
+  ay = imu.calcAccel(imu.ay);
+  az = imu.calcAccel(imu.az);
+
+  dmpQuat[QUAT_W] = (double)qw;
+	dmpQuat[QUAT_X] = (double)qx;
+	dmpQuat[QUAT_Y] = (double)qy;
+	dmpQuat[QUAT_Z] = (double)qz;
+  quaternionNormalize(dmpQuat);	
+	quaternionToEuler(dmpQuat, dmpEuler);
+
+  fusedEuler[VEC3_X] = dmpEuler[VEC3_X];
+	fusedEuler[VEC3_Y] = -dmpEuler[VEC3_Y];
+	fusedEuler[VEC3_Z] = 0;
+
+  eulerToQuaternion(fusedEuler, unfusedQuat);
+
+	magQuat[QUAT_W] = 0;
+	magQuat[QUAT_X] = (double)my;
+  magQuat[QUAT_Y] = -(double)mx;
+  magQuat[QUAT_Z] = (double)mz;
+
+	tiltCompensate(magQuat, unfusedQuat);
+
+  // deltaDMPYaw = (float)-dmpEuler[VEC3_Z] + lastDMPYaw;
+	// lastDMPYaw = (float)dmpEuler[VEC3_Z];
+
+  magYaw = -atan2(magQuat[QUAT_Y], magQuat[QUAT_X]);
+  fHeading[1] = (float)magYaw * 180.0f / (float)PI;
+
+  if(fHeading[1] - fHeading[0] > 180.0f) {
+    fHeading[0] += 360;
+  } else {
+    if(fHeading[0] - fHeading[1] > 180.0f) {
+      fHeading[0] -= 360;
+    }
+  }
+
+  // add LPF for smoother result
+  fHeading[0] = (fHeading[0] * 14.0f + fHeading[1] * 2.0f) / 16.0f;
+
+  return 0;
+}
+
 void imu_loop(void) {
   if (magCalibFlag) {
       magCal_nonblocking(magBias,magScale);
@@ -190,43 +261,20 @@ void imu_loop(void) {
         {
             // computeEulerAngles can be used -- after updating the
             // quaternion values -- to estimate roll, pitch, and yaw
-            imu.computeEulerAnglesZYX(false);
+            // imu.computeEulerAnglesZYX(false);
 
             // After calling dmpUpdateFifo() the ax, gx, mx, etc. values
             // are all updated.
             // Quaternion values are, by default, stored in Q30 long
             // format. calcQuat turns them into a float between -1 and 1
-            qw = imu.calcQuat(imu.qw);
-            qx = imu.calcQuat(imu.qx);
-            qy = imu.calcQuat(imu.qy);
-            qz = imu.calcQuat(imu.qz);
-
-            ax = imu.calcAccel(imu.ax);
-            ay = imu.calcAccel(imu.ay);
-            az = imu.calcAccel(imu.az);
-
-            // // heading in x direction
-            // fHeading[1] = imu.calcCompassHeadingTiltY(-imu.ay, imu.ax, imu.az, mx, -my, mz);
-            // fHeading[1]*= 180.0 / PI;
             
-            // heading in y direction
-            // fHeading[1] = imu.calcCompassHeadingTilt(imu.ax, -imu.ay, imu.az, my, -mx, -mz);
-            fHeading[1] = imu.calcAzimuth((double)imu.pitch, (double)imu.roll, my, mx, mz);
-            fHeading[1]*= 180.0 / PI;
-            
-            if(fHeading[1] - fHeading[0] > 180.0f) {
-              fHeading[0] += 360;
+            if (imu_calcHeading() < 0) {
+                imu_update_fail_flag = true;
+                print_flag = false;
             } else {
-              if(fHeading[0] - fHeading[1] > 180.0f) {
-                fHeading[0] -= 360;
-              }
+              imu_update_fail_flag = false;
+              print_flag = true;
             }
-
-            // add LPF for smoother result
-            fHeading[0] = (fHeading[0] * 14.0f + fHeading[1] * 2.0f) / 16.0f;
-            
-            imu_update_fail_flag = false;
-            print_flag = true;
         } else {
           imu_update_fail_flag = true;
         }
