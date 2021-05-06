@@ -363,11 +363,16 @@ public:
 	// Input: boolean indicating whether angle results are presented in degrees or radians
 	// Output: class variables roll, pitch, and yaw will be updated on exit.	
 	void computeEulerAngles(bool degrees = true);
+
+	// computeEulerAnglesZYX -- Compute euler angles based on most recently read qw, qx, qy, and qz using ZYX convention
+	// Input: boolean indicating whether angle results are presented in degrees or radians
+	// Output: class variables roll, pitch, and yaw will be updated on exit.
+	void computeEulerAnglesZYX(bool degrees = true);
 	
 	// calcAzimuth -- Compute azimuth / heading with tilt compensation
 	// Input: pitch and roll in radian and 3-axis magnetometer values
 	// Output: azimuth / heading based on tilt compensation
-	float calcAzimuth(float Y_r, float X_r, float mag_x, float mag_y, float mag_z);
+	float calcAzimuth(double Y_r, double X_r, float mag_x, float mag_y, float mag_z);
 
 	// calcCompassHeadingTiltY -- Compute heading based on most recently read mx, my, and mz values
 	//                           with tilt compensation based on accelerometer values

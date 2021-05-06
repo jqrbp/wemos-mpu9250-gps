@@ -190,7 +190,8 @@ void imu_loop(void) {
         {
             // computeEulerAngles can be used -- after updating the
             // quaternion values -- to estimate roll, pitch, and yaw
-            imu.computeEulerAngles(false);
+            imu.computeEulerAnglesZYX(false);
+
             // After calling dmpUpdateFifo() the ax, gx, mx, etc. values
             // are all updated.
             // Quaternion values are, by default, stored in Q30 long
@@ -209,9 +210,9 @@ void imu_loop(void) {
             // fHeading[1]*= 180.0 / PI;
             
             // heading in y direction
-            fHeading[1] = imu.calcCompassHeadingTilt(imu.ax, -imu.ay, imu.az, my, -mx, -mz);
+            // fHeading[1] = imu.calcCompassHeadingTilt(imu.ax, -imu.ay, imu.az, my, -mx, -mz);
+            fHeading[1] = imu.calcAzimuth((double)imu.pitch, (double)imu.roll, my, mx, mz);
             fHeading[1]*= 180.0 / PI;
-            fHeading[1]-= 90.0f;
             
             if(fHeading[1] - fHeading[0] > 180.0f) {
               fHeading[0] += 360;

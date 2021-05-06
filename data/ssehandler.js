@@ -73,6 +73,14 @@ function setMyJson(_val) {
 	return false;
 }
 
+function setMyJsonRadToDeg(_val) {
+	if(chkMyJSON(_val)) {
+		getID(_val).value = myJSON[_val] * 180 / Math.PI;
+		return true;
+	}
+	return false;
+}
+
 function got_packet(msgdata) {
     var n, s = "";
     
@@ -97,7 +105,7 @@ function got_packet(msgdata) {
 
             //object quaternion
 			setMyJson("qw"); setMyJson("qx"); setMyJson("qy"); setMyJson("qz");
-            setMyJson("r"); setMyJson("p"); setMyJson("y");
+            setMyJsonRadToDeg("r"); setMyJsonRadToDeg("p"); setMyJsonRadToDeg("y");
             setMyJson("ax"); setMyJson("ay"); setMyJson("az");
             setMyJson("latitude"); setMyJson("longitude");
 
