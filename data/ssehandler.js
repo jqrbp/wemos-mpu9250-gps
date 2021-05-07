@@ -105,6 +105,7 @@ function got_packet(msgdata) {
 
             //object quaternion
 			setMyJson("qw"); setMyJson("qx"); setMyJson("qy"); setMyJson("qz");
+            setMyJson("dqw"); setMyJson("dqx"); setMyJson("dqy"); setMyJson("dqz");
             setMyJsonRadToDeg("r"); setMyJsonRadToDeg("p"); setMyJsonRadToDeg("y");
             setMyJson("ax"); setMyJson("ay"); setMyJson("az");
             setMyJson("latitude"); setMyJson("longitude");

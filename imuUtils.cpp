@@ -8,7 +8,7 @@ extern "C" {
 }
 
 MPU9250_DMP imu;
-static char imuTxtBuffer[200];
+static char imuTxtBuffer[250];
 
 float qw,qx,qy,qz;
 float ax,ay,az, mx, my, mz;
@@ -49,8 +49,8 @@ void printIMUData(void)
 {  
   if (millis() - printTime > printTimeLimit) {
     if (print_flag) {
-      sprintf(imuTxtBuffer, "{\"qw\":%.4f,\"qx\":%.4f,\"qy\":%.4f,\"qz\":%.4f,\"r\":%.2f,\"p\":%.2f,\"y\":%.2f,\"ax\":%.4f,\"ay\":%.4f,\"az\":%.4f,\"mx\":%.4f,\"my\":%.4f,\"mz\":%.4f,\"mh\":%.4f,\"h\":%.4f}", 
-        (float)fusedQuat[QUAT_W], (float)fusedQuat[QUAT_X], (float)fusedQuat[QUAT_Y], (float)fusedQuat[QUAT_Z], (float)dmpEuler[VEC3_X], (float)dmpEuler[VEC3_Y], (float)dmpEuler[VEC3_Z], ax, ay, az, mx, my, mz, (float)magYaw, fHeading[0]);
+      sprintf(imuTxtBuffer, "{\"dqw\":%.4f,\"dqx\":%.4f,\"dqy\":%.4f,\"dqz\":%.4f,\"qw\":%.4f,\"qx\":%.4f,\"qy\":%.4f,\"qz\":%.4f,\"r\":%.2f,\"p\":%.2f,\"y\":%.2f,\"ax\":%.4f,\"ay\":%.4f,\"az\":%.4f,\"mx\":%.4f,\"my\":%.4f,\"mz\":%.4f,\"mh\":%.4f,\"h\":%.4f}", 
+        qw,qx,qy,qz,(float)fusedQuat[QUAT_W], (float)fusedQuat[QUAT_X], (float)fusedQuat[QUAT_Y], (float)fusedQuat[QUAT_Z], (float)dmpEuler[VEC3_X], (float)dmpEuler[VEC3_Y], (float)dmpEuler[VEC3_Z], ax, ay, az, mx, my, mz, (float)magYaw, fHeading[0]);
       SSEBroadcastTxt(imuTxtBuffer);
       print_flag = false;
     }
