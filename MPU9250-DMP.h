@@ -15,8 +15,8 @@ SparkFun 9DoF Razor IMU M0
 Supported Platforms:
 - ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
 ******************************************************************************/
-#ifndef _SPARKFUN_MPU9250_DMP_H_
-#define _SPARKFUN_MPU9250_DMP_H_
+#ifndef _MPU9250_DMP_H_
+#define _MPU9250_DMP_H_
 
 #include <Wire.h>
 #include <Arduino.h>
@@ -31,6 +31,8 @@ Supported Platforms:
 extern "C" {
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
+#include "quaternion.h"
+#include "vector3d.h"
 }
 
 typedef int inv_error_t;
@@ -78,7 +80,9 @@ public:
 	unsigned long time;
 	float pitch, roll, yaw;
 	float heading;
-	
+	vector3d_t dmpEuler;
+	quaternion_t fusedQuat;
+
 	MPU9250_DMP();
 	
 	// begin(void) -- Verifies communication with the MPU-9250 and the AK8963,
@@ -386,6 +390,10 @@ public:
 	// Output: class variable heading will be updated on exit
 	float calcCompassHeadingTilt(float acc_x, float acc_y, float acc_z, float mag_x, float mag_y, float mag_z);
 
+	// computeFusedCompass -- Compute heading based on most recently read calibrated mx, my, and mz with dmp tilted/fused quaternion
+	// Output: class variable heading will be updated on exit
+	int computeFusedCompass(float mx, float my, float mz);
+
 	// computeCompassHeading -- Compute heading based on most recently read mx, my, and mz values
 	// Output: class variable heading will be updated on exit
 	float computeCompassHeading(void);
@@ -400,10 +408,10 @@ public:
 private:
 	unsigned short _aSense;
 	float _gSense, _mSense;
-	
+	float _fHeading[2];
 	// Convert a QN-format number to a float
 	float qToFloat(long number, unsigned char q);
 	unsigned short orientation_row_2_scale(const signed char *row);
 };
 
-#endif // _SPARKFUN_MPU9250_DMP_H_
+#endif // _MPU9250_DMP_H_

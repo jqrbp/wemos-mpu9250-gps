@@ -15,7 +15,7 @@ SparkFun 9DoF Razor IMU M0
 Supported Platforms:
 - ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
 ******************************************************************************/
-#include "SparkFunMPU9250-DMP.h"
+#include "MPU9250-DMP.h"
 #include "MPU9250_RegisterMap.h"
 
 extern "C" {
@@ -742,6 +742,71 @@ float MPU9250_DMP::calcCompassHeadingTiltY(float acc_x, float acc_y, float acc_z
 	// // pitch = (double)_pitch; roll = (double)_roll;
 	
 	return (float)calcAzimuth(Y_r, X_r, mag_x, mag_y, mag_z);
+}
+
+int MPU9250_DMP::computeFusedCompass(float mx, float my, float mz) {
+	vector3d_t fusedEuler;
+	vector3d_t magEuler;
+	quaternion_t dmpQuat;
+	quaternion_t magQuat;
+	quaternion_t unfusedQuat;
+	double magYaw;
+
+	// After calling dmpUpdateFifo() the ax, gx, mx, etc. values
+	// are all updated.
+	// Quaternion values are, by default, stored in Q30 long
+	// format. calcQuat turns them into a float between -1 and 1
+	float dqw = qToFloat(qw, 30);
+    float dqx = qToFloat(qx, 30);
+    float dqy = qToFloat(qy, 30);
+    float dqz = qToFloat(qz, 30);
+
+	dmpQuat[QUAT_W] = (double)dqw;
+	dmpQuat[QUAT_X] = (double)dqx;
+	dmpQuat[QUAT_Y] = (double)dqy;
+	dmpQuat[QUAT_Z] = (double)dqz;
+	quaternionNormalize(dmpQuat);
+	quaternionToEuler(dmpQuat, dmpEuler);
+
+	// dmp pitch is positive when nose down but 
+	// on the eulerToQuaternion, the pitch is positive when the nose up
+	// fused X axis = dmp X axis = mag Y axis
+	// fused Y axis = -dmp Y axis = -mag X axis
+	// fused Z axis = -dmp Z axis = mag Z axis
+	fusedEuler[VEC3_X] = dmpEuler[VEC3_X];
+	fusedEuler[VEC3_Y] = -dmpEuler[VEC3_Y];
+	fusedEuler[VEC3_Z] = 0;
+
+	eulerToQuaternion(fusedEuler, unfusedQuat);
+
+	// Magnetometer pure quaternion
+	magQuat[QUAT_W] = 0;
+	magQuat[QUAT_X] = (double)my;
+	magQuat[QUAT_Y] = -(double)mx;
+	magQuat[QUAT_Z] = (double)mz;
+
+	tiltCompensate(magQuat, unfusedQuat);
+
+	magYaw = -atan2(magQuat[QUAT_Y], magQuat[QUAT_X]);
+
+	if (magYaw != magYaw) {
+		// Serial.println("magYaw NAN\n");
+		return -1;
+	}
+
+	if (magYaw < 0) magYaw += (double)TWO_PI;
+
+	if ((float)magYaw - heading > PI) {
+		magYaw -= TWO_PI;
+	} else if (heading - (float)magYaw > PI) {
+		heading -= TWO_PI;
+	}
+
+	heading = heading * 0.9f + (float)magYaw * 0.1f;
+	fusedEuler[VEC3_Z] = heading;
+	eulerToQuaternion(fusedEuler, fusedQuat);
+
+	return 0;
 }
 
 float MPU9250_DMP::computeCompassHeading(void)

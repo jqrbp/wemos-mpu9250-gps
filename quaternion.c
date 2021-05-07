@@ -129,3 +129,28 @@ void tiltCompensate(quaternion_t magQ, quaternion_t unfusedQ)
 	quaternionMultiply(magQ, unfusedConjugateQ, tempQ);
 	quaternionMultiply(unfusedQ, tempQ, magQ);
 }
+
+void quaternionLERP(quaternion_t a, const quaternion_t b, const double t)
+{
+	double t_ = 1 - t;
+	a[QUAT_X] = t_*a[QUAT_X] + t*b[QUAT_X];
+	a[QUAT_Y] = t_*a[QUAT_Y] + t*b[QUAT_Y];
+	a[QUAT_Z] = t_*a[QUAT_Z] + t*b[QUAT_Z];
+	a[QUAT_W] = t_*a[QUAT_W] + t*b[QUAT_W];
+	quaternionNormalize(a);
+}
+
+void quaternionSLERP(quaternion_t a, const quaternion_t b, const double t)
+{
+	double t_ = 1 - t;
+	double Wa, Wb;
+	double theta = acos(a[QUAT_X]*b[QUAT_X] + a[QUAT_Y]*b[QUAT_Y] + a[QUAT_Z]*b[QUAT_Z] + a[QUAT_W]*b[QUAT_W]);
+	double sn = sin(theta);
+	Wa = sin(t_*theta) / sn;
+	Wb = sin(t*theta) / sn;
+	a[QUAT_X] = Wa*a[QUAT_X] + Wb*b[QUAT_X];
+	a[QUAT_Y] = Wa*a[QUAT_Y] + Wb*b[QUAT_Y];
+	a[QUAT_Z] = Wa*a[QUAT_Z] + Wb*b[QUAT_Z];
+	a[QUAT_W] = Wa*a[QUAT_W] + Wb*b[QUAT_W];
+	quaternionNormalize(a);
+}

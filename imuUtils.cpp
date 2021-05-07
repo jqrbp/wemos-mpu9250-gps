@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "SparkFunMPU9250-DMP.h"
+#include "MPU9250-DMP.h"
 #include "webUtils.h"
 #include <LittleFS.h>
 #include "fileUtils.h"
@@ -14,12 +14,6 @@ static char imuTxtBuffer[190];
 
 float qw,qx,qy,qz;
 float ax,ay,az, mx, my, mz;
-int yaw_mixing_factor = 0;
-// float lastYaw, lastDMPYaw;
-double magYaw;
-vector3d_t dmpEuler;
-quaternion_t fusedQuat;
-float fHeading[2];
 
 int intPin = 14;
 
@@ -47,33 +41,54 @@ void toggle_serial_debug_imu_flag(void) {
   serial_debug_imu_flag = !serial_debug_imu_flag;
 }
 
+void printIMUDataRaw(void)
+{  
+  // After calling update() the ax, ay, az, gx, gy, gz, mx,
+  // my, mz, time, and/or temerature class variables are all
+  // updated. Access them by placing the object. in front:
+
+  // Use the calcAccel, calcGyro, and calcMag functions to
+  // convert the raw sensor readings (signed 16-bit values)
+  // to their respective units.
+  float accelX = imu.calcAccel(imu.ax);
+  float accelY = imu.calcAccel(imu.ay);
+  float accelZ = imu.calcAccel(imu.az);
+  float gyroX = imu.calcGyro(imu.gx);
+  float gyroY = imu.calcGyro(imu.gy);
+  float gyroZ = imu.calcGyro(imu.gz);
+  float magX = imu.calcMag(imu.mx);
+  float magY = imu.calcMag(imu.my);
+  float magZ = imu.calcMag(imu.mz);
+  
+  Serial.print("imu raw:");
+  Serial.print(String(imu.dmpEuler[VEC3_X]) + "," + String(imu.dmpEuler[VEC3_Y]) + "," + String(imu.dmpEuler[VEC3_Z]) + "\t");
+  Serial.print(String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az) + "\t");
+  Serial.print(String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz)+"\t");
+  Serial.print(String(update_compass_flag) +"\t" + String(imu.heading, 2));
+  Serial.println();
+
+  Serial.println("Accel: " + String(accelX) + ", " +
+              String(accelY) + ", " + String(accelZ) + " g");
+  Serial.println("Gyro: " + String(gyroX) + ", " +
+              String(gyroY) + ", " + String(gyroZ) + " dps");
+  Serial.println("Mag: " + String(magX) + ", " +
+              String(magY) + ", " + String(magZ) + " uT");
+  Serial.println("Time: " + String(imu.time) + " ms");
+  Serial.println();
+}
+
 void printIMUData(void)
 {  
   if (millis() - printTime > printTimeLimit) {
     if (print_flag) {
-      // sprintf(imuTxtBuffer, "{\"lat1\":%.8f,\"lng1\":%.8f,\"lat2\":%.8f,\"lng2\":%.8f,\"dqw\":%.4f,\"dqx\":%.4f,\"dqy\":%.4f,\"dqz\":%.4f,\"qw\":%.4f,\"qx\":%.4f,\"qy\":%.4f,\"qz\":%.4f,\"r\":%.2f,\"p\":%.2f,\"y\":%.2f,\"ax\":%.4f,\"ay\":%.4f,\"az\":%.4f,\"mx\":%.4f,\"my\":%.4f,\"mz\":%.4f,\"mh\":%.4f,\"h\":%.4f}", 
-      //   gpsUtilsWrapper_get_latitude(1),gpsUtilsWrapper_get_longitude(1),gpsUtilsWrapper_get_latitude(2),gpsUtilsWrapper_get_longitude(2),
-      //   qw,qx,qy,qz,
-      //   (float)fusedQuat[QUAT_W], (float)fusedQuat[QUAT_X], (float)fusedQuat[QUAT_Y], (float)fusedQuat[QUAT_Z], 
-      //   (float)dmpEuler[VEC3_X], (float)dmpEuler[VEC3_Y], (float)dmpEuler[VEC3_Z], 
-      //   ax, ay, az, mx, my, mz, 
-      //   (float)magYaw, fHeading[0]);
       sprintf(imuTxtBuffer, "{\"loc1\":[%.5f,%.5f],\"loc2\":[%.5f,%.5f],\"qw\":%.3f,\"qx\":%.3f,\"qy\":%.3f,\"qz\":%.3f,\"ax\":%.3f,\"ay\":%.3f,\"az\":%.3f,\"mx\":%.2f,\"my\":%.2f,\"mz\":%.2f,\"h\":%.2f}", 
         gpsUtilsWrapper_get_latitude(1),gpsUtilsWrapper_get_longitude(1),gpsUtilsWrapper_get_latitude(2),gpsUtilsWrapper_get_longitude(2),
-        (float)fusedQuat[QUAT_W], (float)fusedQuat[QUAT_X], (float)fusedQuat[QUAT_Y], (float)fusedQuat[QUAT_Z],
-        ax, ay, az, mx, my, mz, fHeading[0]);
+        (float)imu.fusedQuat[QUAT_W], (float)imu.fusedQuat[QUAT_X], (float)imu.fusedQuat[QUAT_Y], (float)imu.fusedQuat[QUAT_Z],
+        ax, ay, az, mx, my, mz, imu.heading);
       SSEBroadcastTxt(imuTxtBuffer);
       print_flag = false;
     }
-    // SSE_add_char(imuTxtBuffer);
-    // Serial.println(imuTxtBuffer);
-    // Serial.println("Q: " + String(q0, 4) + ", " +
-    //                   String(q1, 4) + ", " + String(q2, 4) + 
-    //                   ", " + String(q3, 4));
-    // Serial.println("R/P/Y: " + String(imu.roll) + ", "
-    //           + String(imu.pitch) + ", " + String(imu.yaw));
-    // Serial.println("Time: " + String(imu.time) + " ms");
-    // Serial.println();
+
     if (serial_debug_imu_flag) {
       if (imu_update_fail_flag) {
         Serial.println("imu fifo update failed");
@@ -81,9 +96,9 @@ void printIMUData(void)
           appendFile("log.txt", "imu fifo update failed\r\n");
           imu_update_fail_log_flag = false;
         }
-      } else {
-        Serial.println("imu raw:"+ String(dmpEuler[VEC3_X]) + "," + String(dmpEuler[VEC3_Y]) + "," + String(dmpEuler[VEC3_Z]) + "\t" + String(imu.ax)+ "," + String(imu.ay)+ "," + String(imu.az) + ";" + String(imu.mx)+ "," + String(imu.my)+ "," + String(imu.mz)+"," + String(update_compass_flag) +"\t" + String(fHeading[0], 2));
+        return;
       }
+      printIMUDataRaw();
     }
   }
 }
@@ -190,118 +205,6 @@ void imu_send_mag_calib(void) {
   SSEBroadcastTxt(imuTxtBuffer);
 }
 
-int imu_calcHeading(void) {
-  vector3d_t fusedEuler;
-  vector3d_t magEuler;
-  quaternion_t dmpQuat;
-	quaternion_t magQuat;
-	quaternion_t unfusedQuat;
-  // float deltaDMPYaw;
-	// float deltaMagYaw;
-	// float newYaw;
-
-  // // heading in x direction
-  // fHeading[1] = imu.calcCompassHeadingTiltY(-imu.ay, imu.ax, imu.az, mx, -my, mz);
-  // fHeading[1]*= 180.0 / PI;
-
-  // heading in y direction
-  // fHeading[1] = imu.calcCompassHeadingTilt(imu.ax, -imu.ay, imu.az, my, -mx, -mz);
-  // fHeading[1] = imu.calcAzimuth((double)imu.pitch, (double)imu.roll, my, mx, mz);
-
-  qw = imu.calcQuat(imu.qw);
-  qx = imu.calcQuat(imu.qx);
-  qy = imu.calcQuat(imu.qy);
-  qz = imu.calcQuat(imu.qz);
-
-  ax = imu.calcAccel(imu.ax);
-  ay = imu.calcAccel(imu.ay);
-  az = imu.calcAccel(imu.az);
-
-  dmpQuat[QUAT_W] = (double)qw;
-	dmpQuat[QUAT_X] = (double)qx;
-	dmpQuat[QUAT_Y] = (double)qy;
-	dmpQuat[QUAT_Z] = (double)qz;
-  quaternionNormalize(dmpQuat);	
-	quaternionToEuler(dmpQuat, dmpEuler);
-
-  fusedEuler[VEC3_X] = dmpEuler[VEC3_X];
-	fusedEuler[VEC3_Y] = -dmpEuler[VEC3_Y]; // dmp pitch is going down + but the eulerToQuaternion requires the pitch to be up +
-	fusedEuler[VEC3_Z] = 0; //-atan2(mx, my); // this good with calibration but very prone to tilt
-
-  // X axis = dmp X axis = mag Y axis
-  // Y axis = -dmp Y axis = -mag X axis
-  // Z axis = -dmp Z axis = mag Z axis
-  eulerToQuaternion(fusedEuler, unfusedQuat);
-
-  // deltaDMPYaw = (float)-dmpEuler[VEC3_Z] + lastDMPYaw;
-	// lastDMPYaw = (float)dmpEuler[VEC3_Z];
-
-	magQuat[QUAT_W] = 0;
-	magQuat[QUAT_X] = (double)my;
-  magQuat[QUAT_Y] = -(double)mx;
-  magQuat[QUAT_Z] = (double)mz;
-  // quaternionNormalize(magQuat);	
-	// quaternionToEuler(magQuat, magEuler);
-	tiltCompensate(magQuat, unfusedQuat);
-
-  magYaw = -atan2(magQuat[QUAT_Y], magQuat[QUAT_X]);
-  // magYaw = fusedEuler[VEC3_Z];
-
-  if (magYaw != magYaw) {
-		Serial.println("magYaw NAN\n");
-		return -1;
-	}
-
-	if (magYaw < 0.0)
-		magYaw += (double)TWO_PI;
-  // else if(magYaw >= TWO_PI) {
-  //   magYaw -= (double)TWO_PI;
-  // }
-  
-	// newYaw = lastYaw + deltaDMPYaw;
-
-	// if (newYaw > TWO_PI)
-	// 	newYaw -= TWO_PI;
-	// else if (newYaw < 0.0f)
-	// 	newYaw += TWO_PI;
-	 
-	// deltaMagYaw = (float)magYaw - newYaw;
-	
-	// if (deltaMagYaw >= (float)M_PI)
-	// 	deltaMagYaw -= TWO_PI;
-	// else if (deltaMagYaw < -(float)M_PI)
-	// 	deltaMagYaw += TWO_PI;
-
-	// if (yaw_mixing_factor > 0)
-	// 	newYaw += deltaMagYaw / yaw_mixing_factor;
-
-	// if (newYaw > TWO_PI)
-	// 	newYaw -= TWO_PI;
-	// else if (newYaw < 0.0f)
-	// 	newYaw += TWO_PI;
-
-	// lastYaw = newYaw;
-
-	// if (newYaw > (float)M_PI)
-	// 	newYaw -= TWO_PI;
-
-  fHeading[1] = (float)magYaw;
-  if(fHeading[1] - fHeading[0] > PI) {
-    fHeading[0] += TWO_PI;
-  } else {
-    if(fHeading[0] - fHeading[1] > PI) {
-      fHeading[0] -= TWO_PI;
-    }
-  }
-  // add LPF for smoother result
-  fHeading[0] = (fHeading[0] * 14.0f + fHeading[1] * 2.0f) / 16.0f;
-
-	fusedEuler[VEC3_Z] = (double)fHeading[0];
-	eulerToQuaternion(fusedEuler, fusedQuat);
-
-  return 0;
-}
-
 void imu_loop(void) {
   if (magCalibFlag) {
       magCal_nonblocking(magBias,magScale);
@@ -318,58 +221,21 @@ void imu_loop(void) {
     {
         // Use dmpUpdateFifo to update the ax, gx, mx, etc. values
         if ( imu.dmpUpdateFifo() == INV_SUCCESS)
-        {
-            // computeEulerAngles can be used -- after updating the
-            // quaternion values -- to estimate roll, pitch, and yaw
-            // imu.computeEulerAnglesZYX(false);
+        {          
+            ax = imu.calcAccel(imu.ax);
+            ay = imu.calcAccel(imu.ay);
+            az = imu.calcAccel(imu.az);
 
-            // After calling dmpUpdateFifo() the ax, gx, mx, etc. values
-            // are all updated.
-            // Quaternion values are, by default, stored in Q30 long
-            // format. calcQuat turns them into a float between -1 and 1
-            
-            if (imu_calcHeading() < 0) {
-                imu_update_fail_flag = true;
-                print_flag = false;
-            } else {
-              imu_update_fail_flag = false;
-              print_flag = true;
-            }
+            imu.computeFusedCompass(mx, my, mz);
+
+            imu_update_fail_flag = false;
+            print_flag = true;
         } else {
           imu_update_fail_flag = true;
         }
     }
   }
   printIMUData();
-}
-
-void printIMUDataRaw(void)
-{  
-  // After calling update() the ax, ay, az, gx, gy, gz, mx,
-  // my, mz, time, and/or temerature class variables are all
-  // updated. Access them by placing the object. in front:
-
-  // Use the calcAccel, calcGyro, and calcMag functions to
-  // convert the raw sensor readings (signed 16-bit values)
-  // to their respective units.
-  float accelX = imu.calcAccel(imu.ax);
-  float accelY = imu.calcAccel(imu.ay);
-  float accelZ = imu.calcAccel(imu.az);
-  float gyroX = imu.calcGyro(imu.gx);
-  float gyroY = imu.calcGyro(imu.gy);
-  float gyroZ = imu.calcGyro(imu.gz);
-  float magX = imu.calcMag(imu.mx);
-  float magY = imu.calcMag(imu.my);
-  float magZ = imu.calcMag(imu.mz);
-  
-  Serial.println("Accel: " + String(accelX) + ", " +
-              String(accelY) + ", " + String(accelZ) + " g");
-  Serial.println("Gyro: " + String(gyroX) + ", " +
-              String(gyroY) + ", " + String(gyroZ) + " dps");
-  Serial.println("Mag: " + String(magX) + ", " +
-              String(magY) + ", " + String(magZ) + " uT");
-  Serial.println("Time: " + String(imu.time) + " ms");
-  Serial.println();
 }
 
 void imu_setup(void) {

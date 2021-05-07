@@ -7,9 +7,9 @@
 
 ESP8266WiFiMulti wifiMulti;
 
-const uint8_t ssidNum = 0;
-const char* ssid[] = { "wifirouter1", "wifirouter2"};
-const char* ssid_passwd[] = { "wifirouter1pass", "wifirouter2pass" };
+const uint8_t ssidNum = 1;
+const char* ssid[] = { "iptimean", "wifirouter2"};
+const char* ssid_passwd[] = { "anpass5013954", "wifirouter2pass" };
 
 const char* ap_ssid = "myAccessPoint";
 const char* ap_password = "myAPPassword";
@@ -68,8 +68,12 @@ void wifi_loop() {
 }
 
 void print_ip_address(void) {
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    if (wifiMulti.run() == WL_CONNECTED) {
+        Serial.println("");
+        Serial.println("WiFi connected");
+        Serial.println("IP address: ");
+        Serial.println(WiFi.localIP());
+    } else {
+        Serial.println("wifi is not connected");
+    }
 }

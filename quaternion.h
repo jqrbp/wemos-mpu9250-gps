@@ -39,6 +39,7 @@ void eulerToQuaternion(vector3d_t v, quaternion_t q);
 void quaternionConjugate(quaternion_t s, quaternion_t d);
 void quaternionMultiply(quaternion_t qa, quaternion_t qb, quaternion_t qd);
 void tiltCompensate(quaternion_t magQ, quaternion_t unfusedQ);
-
+void quaternionLERP(quaternion_t a, const quaternion_t b, const double t);
+void quaternionSLERP(quaternion_t a, const quaternion_t b, const double t);
 #endif /* MPUQUATERNION_H */
 
