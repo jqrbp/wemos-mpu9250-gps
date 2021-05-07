@@ -8,11 +8,15 @@ extern "C" {
 }
 
 MPU9250_DMP imu;
-static char imuTxtBuffer[140];
+static char imuTxtBuffer[200];
 
 float qw,qx,qy,qz;
 float ax,ay,az, mx, my, mz;
+int yaw_mixing_factor = 0;
+// float lastYaw, lastDMPYaw;
+double magYaw;
 vector3d_t dmpEuler;
+quaternion_t fusedQuat;
 float fHeading[2];
 
 int intPin = 14;
@@ -45,8 +49,8 @@ void printIMUData(void)
 {  
   if (millis() - printTime > printTimeLimit) {
     if (print_flag) {
-      sprintf(imuTxtBuffer, "{\"qw\":%.4f,\"qx\":%.4f,\"qy\":%.4f,\"qz\":%.4f,\"r\":%.2f,\"p\":%.2f,\"y\":%.2f,\"ax\":%.4f,\"ay\":%.4f,\"az\":%.4f,\"h\":%.2f}", 
-        qw, qx, qy, qz, (float)dmpEuler[VEC3_X], (float)dmpEuler[VEC3_Y], (float)dmpEuler[VEC3_Z], ax, ay, az, fHeading[0]);
+      sprintf(imuTxtBuffer, "{\"qw\":%.4f,\"qx\":%.4f,\"qy\":%.4f,\"qz\":%.4f,\"r\":%.2f,\"p\":%.2f,\"y\":%.2f,\"ax\":%.4f,\"ay\":%.4f,\"az\":%.4f,\"mx\":%.4f,\"my\":%.4f,\"mz\":%.4f,\"mh\":%.4f,\"h\":%.4f}", 
+        (float)fusedQuat[QUAT_W], (float)fusedQuat[QUAT_X], (float)fusedQuat[QUAT_Y], (float)fusedQuat[QUAT_Z], (float)dmpEuler[VEC3_X], (float)dmpEuler[VEC3_Y], (float)dmpEuler[VEC3_Z], ax, ay, az, mx, my, mz, (float)magYaw, fHeading[0]);
       SSEBroadcastTxt(imuTxtBuffer);
       print_flag = false;
     }
@@ -117,7 +121,7 @@ int magCal_nonblocking(float * dest1, float * dest2) {
 				if(magRate <= 10) magCalibDT = 135;  // at 8 Hz ODR, new mag data is available every 125 ms
 				else magCalibDT = 12;  // at 100 Hz ODR, new mag data is available every 10 ms
 				
-        sprintf(imuTxtBuffer,  "{\"mcx\":%lu,\"mci\":%lu,\"mvx\":%d,\"mvy\":%d,\"mvz\":\"%d\"}", 
+        sprintf(imuTxtBuffer,  "{\"mcx\":%lu,\"mci\":%lu,\"mx\":%d,\"my\":%d,\"mz\":\"%d\"}", 
           sample_count, magCalibIdx, mag_temp[0], mag_temp[1], mag_temp[2]);
         SSEBroadcastTxt(imuTxtBuffer);
 
@@ -177,13 +181,13 @@ void imu_send_mag_calib(void) {
 
 int imu_calcHeading(void) {
   vector3d_t fusedEuler;
+  vector3d_t magEuler;
   quaternion_t dmpQuat;
 	quaternion_t magQuat;
 	quaternion_t unfusedQuat;
-	float deltaDMPYaw;
-	float deltaMagYaw;
-	double magYaw;
-	float newYaw;
+  // float deltaDMPYaw;
+	// float deltaMagYaw;
+	// float newYaw;
 
   // // heading in x direction
   // fHeading[1] = imu.calcCompassHeadingTiltY(-imu.ay, imu.ax, imu.az, mx, -my, mz);
@@ -210,34 +214,79 @@ int imu_calcHeading(void) {
 	quaternionToEuler(dmpQuat, dmpEuler);
 
   fusedEuler[VEC3_X] = dmpEuler[VEC3_X];
-	fusedEuler[VEC3_Y] = -dmpEuler[VEC3_Y];
-	fusedEuler[VEC3_Z] = 0;
+	fusedEuler[VEC3_Y] = -dmpEuler[VEC3_Y]; // dmp pitch is going down + but the eulerToQuaternion requires the pitch is up +
+	fusedEuler[VEC3_Z] = 0; //-atan2(mx, my); // this good with calibration but very prone to tilt
 
+  // X axis = dmp X axis = mag Y axis
+  // Y axis = -dmp Y axis = -mag X axis
+  // Z axis = -dmp Z axis = mag Z axis
   eulerToQuaternion(fusedEuler, unfusedQuat);
+
+  // deltaDMPYaw = (float)-dmpEuler[VEC3_Z] + lastDMPYaw;
+	// lastDMPYaw = (float)dmpEuler[VEC3_Z];
 
 	magQuat[QUAT_W] = 0;
 	magQuat[QUAT_X] = (double)my;
   magQuat[QUAT_Y] = -(double)mx;
   magQuat[QUAT_Z] = (double)mz;
-
+  // quaternionNormalize(magQuat);	
+	// quaternionToEuler(magQuat, magEuler);
 	tiltCompensate(magQuat, unfusedQuat);
 
-  // deltaDMPYaw = (float)-dmpEuler[VEC3_Z] + lastDMPYaw;
-	// lastDMPYaw = (float)dmpEuler[VEC3_Z];
-
   magYaw = -atan2(magQuat[QUAT_Y], magQuat[QUAT_X]);
-  fHeading[1] = (float)magYaw * 180.0f / (float)PI;
+  // magYaw = fusedEuler[VEC3_Z];
 
-  if(fHeading[1] - fHeading[0] > 180.0f) {
-    fHeading[0] += 360;
+  if (magYaw != magYaw) {
+		Serial.println("magYaw NAN\n");
+		return -1;
+	}
+
+	if (magYaw < 0.0)
+		magYaw += (double)TWO_PI;
+  // else if(magYaw >= TWO_PI) {
+  //   magYaw -= (double)TWO_PI;
+  // }
+  
+	// newYaw = lastYaw + deltaDMPYaw;
+
+	// if (newYaw > TWO_PI)
+	// 	newYaw -= TWO_PI;
+	// else if (newYaw < 0.0f)
+	// 	newYaw += TWO_PI;
+	 
+	// deltaMagYaw = (float)magYaw - newYaw;
+	
+	// if (deltaMagYaw >= (float)M_PI)
+	// 	deltaMagYaw -= TWO_PI;
+	// else if (deltaMagYaw < -(float)M_PI)
+	// 	deltaMagYaw += TWO_PI;
+
+	// if (yaw_mixing_factor > 0)
+	// 	newYaw += deltaMagYaw / yaw_mixing_factor;
+
+	// if (newYaw > TWO_PI)
+	// 	newYaw -= TWO_PI;
+	// else if (newYaw < 0.0f)
+	// 	newYaw += TWO_PI;
+
+	// lastYaw = newYaw;
+
+	// if (newYaw > (float)M_PI)
+	// 	newYaw -= TWO_PI;
+
+  fHeading[1] = (float)magYaw;
+  if(fHeading[1] - fHeading[0] > PI) {
+    fHeading[0] += TWO_PI;
   } else {
-    if(fHeading[0] - fHeading[1] > 180.0f) {
-      fHeading[0] -= 360;
+    if(fHeading[0] - fHeading[1] > PI) {
+      fHeading[0] -= TWO_PI;
     }
   }
-
   // add LPF for smoother result
   fHeading[0] = (fHeading[0] * 14.0f + fHeading[1] * 2.0f) / 16.0f;
+
+	fusedEuler[VEC3_Z] = (double)fHeading[0];
+	eulerToQuaternion(fusedEuler, fusedQuat);
 
   return 0;
 }

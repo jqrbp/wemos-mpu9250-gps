@@ -75,7 +75,7 @@ function setMyJson(_val) {
 
 function setMyJsonRadToDeg(_val) {
 	if(chkMyJSON(_val)) {
-		getID(_val).value = myJSON[_val] * 180 / Math.PI;
+		getID(_val).value = (myJSON[_val]*180/Math.PI).toFixed(4);
 		return true;
 	}
 	return false;
@@ -110,12 +110,12 @@ function got_packet(msgdata) {
             setMyJson("latitude"); setMyJson("longitude");
 
             if(chkMyJSON("h")) {
-                getID("heading").value = myJSON.h
-                document.getElementById("compass-img").style.transform = 'rotate(' + (myJSON.h - 360 ) + 'deg)';
+                getID("heading").value = (myJSON.h*180/Math.PI).toFixed(2);
+                document.getElementById("compass-img").style.transform = 'rotate(' + ((myJSON.h*180/Math.PI) - 360 ) + 'deg)';
             }
 
             //magnetometer values
-            setMyJson("mvx"); setMyJson("mvy"); setMyJson("mvz"); 
+            setMyJson("mx"); setMyJson("my"); setMyJson("mz"); setMyJsonRadToDeg("mh");
 
             //magnetometer calibration
             setMyJson("mbx"); setMyJson("mby"); setMyJson("mbz"); 
@@ -123,7 +123,7 @@ function got_packet(msgdata) {
 
             if(chkMyJSON("mcx")) {
                 if(chkMyJSON("mci")) {
-                    addpoints(myJSON.mvx/3, myJSON.mvy/3, myJSON.mvz/3, myJSON.mcx);
+                    addpoints(myJSON.mx/3, myJSON.my/3, myJSON.mz/3, myJSON.mcx);
                     document.getElementById("stat").value = "calibno:" + myJSON.mci + "/" + myJSON.mcx;
                     if(myJSON.mci >= myJSON.mcx - 2) calibmag = false;
                 }
@@ -185,6 +185,10 @@ function ReadMagParam() {
 function MagCalibrate() {
     calibmag = true;
     httpGetAsync(getID("windowUrl").value + "calib", MagCalibrateReqCallback);
+}
+
+function SetNorth() {
+    httpGetAsync(getID("windowUrl").value + "setNorth", MagCalibrateReqCallback);
 }
 
 function HideInfo() {

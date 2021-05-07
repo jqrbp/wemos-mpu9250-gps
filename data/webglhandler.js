@@ -17,8 +17,8 @@ function getRotation() {
    if(object != undefined) {
       currquat.w = document.getElementById("qw").value; 
       currquat.x = document.getElementById("qy").value * -1;
-      currquat.y = document.getElementById("qz").value;
-      currquat.z = document.getElementById("qx").value * -1;
+      currquat.y = document.getElementById("qz").value * -1;
+      currquat.z = document.getElementById("qx").value;
       currquat.normalize();
       oquat.w = document.getElementById("qrw").value; 
       oquat.x = document.getElementById("qrx").value;
