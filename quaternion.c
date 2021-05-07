@@ -58,7 +58,7 @@ void quaternionToEuler(quaternion_t q, vector3d_t v)
 	double siny_cosp = 2.0 * (q[QUAT_W] * q[QUAT_Z] + q[QUAT_X] * q[QUAT_Y]);
     double cosy_cosp = 1.0 - 2.0 * (qysqr + q[QUAT_Z] * q[QUAT_Z]);
 
-	// Keep t2 within range of asin (-1, 1)
+	// Keep sinp within range of asin (-1, 1)
     sinp = sinp > 1.0 ? 1.0 : sinp;
     sinp = sinp < -1.0 ? -1.0 : sinp;
 
