@@ -73,6 +73,10 @@ function setMyJson(_val) {
 	return false;
 }
 
+function setValID(_id, _val) {
+    getID(_id).value = _val;
+}
+
 function setMyJsonRadToDeg(_val) {
 	if(chkMyJSON(_val)) {
 		getID(_val).value = (myJSON[_val]*180/Math.PI).toFixed(4);
@@ -105,19 +109,25 @@ function got_packet(msgdata) {
 
             //object quaternion
 			setMyJson("qw"); setMyJson("qx"); setMyJson("qy"); setMyJson("qz");
-            setMyJson("dqw"); setMyJson("dqx"); setMyJson("dqy"); setMyJson("dqz");
-            setMyJsonRadToDeg("r"); setMyJsonRadToDeg("p"); setMyJsonRadToDeg("y");
             setMyJson("ax"); setMyJson("ay"); setMyJson("az");
-            setMyJson("lat1"); setMyJson("lat2"); setMyJson("lng1"); setMyJson("lng2");
+            
 
             if(chkMyJSON("h")) {
-                getID("heading").value = (myJSON.h*180/Math.PI).toFixed(2);
+                setValID("heading",(myJSON.h*180/Math.PI).toFixed(2));
                 document.getElementById("compass-img").style.transform = 'rotate(' + ((myJSON.h*180/Math.PI) - 360 ) + 'deg)';
             }
 
-            //magnetometer values
-            setMyJson("mx"); setMyJson("my"); setMyJson("mz"); setMyJsonRadToDeg("mh");
+            if(chkMyJSON("loc1")) {
+                setValID("lat1", myJSON.loc1[0]);  
+                setValID("lng1", myJSON.loc1[1]);
+            } 
+            if(chkMyJSON("loc2")) {
+                setValID("lat2", myJSON.loc2[0]);
+                setValID("lng2", myJSON.loc2[1]);
+            }
 
+            //magnetometer values
+            setMyJson("mx"); setMyJson("my"); setMyJson("mz");
             //magnetometer calibration
             setMyJson("mbx"); setMyJson("mby"); setMyJson("mbz"); 
             setMyJson("msx"); setMyJson("msy"); setMyJson("msz");
