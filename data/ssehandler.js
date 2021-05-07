@@ -108,7 +108,7 @@ function got_packet(msgdata) {
             setMyJson("dqw"); setMyJson("dqx"); setMyJson("dqy"); setMyJson("dqz");
             setMyJsonRadToDeg("r"); setMyJsonRadToDeg("p"); setMyJsonRadToDeg("y");
             setMyJson("ax"); setMyJson("ay"); setMyJson("az");
-            setMyJson("latitude"); setMyJson("longitude");
+            setMyJson("lat1"); setMyJson("lat2"); setMyJson("lng1"); setMyJson("lng2");
 
             if(chkMyJSON("h")) {
                 getID("heading").value = (myJSON.h*180/Math.PI).toFixed(2);

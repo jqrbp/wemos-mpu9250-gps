@@ -31,6 +31,9 @@ https://electropeak.com/learn/
 */
 
 GPS_UTIL::GPS_UTIL(unsigned int _idx, unsigned int _RXPin, unsigned int _TXPin):gpsSerial(_RXPin, _TXPin) {
+  latitude = 0.0f;
+  longitude = 0.0f;
+
   idx = _idx;
     // TinyGPSCustom totalGPGSVMessages(gps, "GPGSV", 1); // $GPGSV sentence, first element
     // TinyGPSCustom messageNumber(gps, "GPGSV", 2);      // $GPGSV sentence, second element
@@ -78,11 +81,13 @@ void GPS_UTIL::displayInfo()
     
     displayInfoTime = millis();
     
-    dtostrf(gps.location.lat(),4,8,latStr);
-    dtostrf(gps.location.lng(),4,8,longStr);
-    String str = "{\"latitude\":" + String(latStr) + ",\"longitude\":" + String(longStr) + "}";
-    SSEBroadcastTxt(str);
-    String fileStr = "#" + String(idx, DEC)+";"+String(latStr) + ", " + String(longStr) + ";";
+    latitude = (float)gps.location.lat();
+    longitude = (float)gps.location.lng();
+    // dtostrf(gps.location.lat(),4,8,latStr);
+    // dtostrf(gps.location.lng(),4,8,longStr);
+    // String str = "{\"latitude\":" + String(latStr) + ",\"longitude\":" + String(longStr) + "}";
+    // SSEBroadcastTxt(str);
+    String fileStr = "#" + String(idx, DEC)+";"+String(latitude) + ", " + String(longitude) + ";";
 
     Serial.print(F("Location: ")); 
     Serial.print(gps.location.lat(), 6);
@@ -127,16 +132,16 @@ void GPS_UTIL::displayInfo()
     fileStr+=";";
     appendFile(R"(/gpslog.txt)", fileStr.c_str() );
     Serial.println();
-  } else {
-    if (latLongValid) {
-      if (millis() - latLongValidTime > latLongValidTimeOut) {
-          String str = "{\"latitude\":" + String(latStr) + ",\"longitude\":" + String(longStr) + "}";
-          SSEBroadcastTxt(str);
-          latLongValidTime = millis();
-      }
-    }
-  }
-
+  } 
+  // else {
+  //   if (latLongValid) {
+  //     if (millis() - latLongValidTime > latLongValidTimeOut) {
+  //         String str = "{\"latitude\":" + String(latStr) + ",\"longitude\":" + String(longStr) + "}";
+  //         SSEBroadcastTxt(str);
+  //         latLongValidTime = millis();
+  //     }
+  //   }
+  // }
 }
 
 // void GPS_UTIL::gpsSatelliteTracker() {

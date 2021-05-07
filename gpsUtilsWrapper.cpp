@@ -18,3 +18,25 @@ void gpsUtilsWrapper_toggle_debug_print(void) {
   gps1.toggle_print_raw();
   gps2.toggle_print_raw();
 }
+
+float gpsUtilsWrapper_get_latitude(int index) {
+  switch(index) {
+    case 1:
+      gps1.latitude;
+      break;
+    case 2:
+      gps2.latitude;
+      break;
+  }
+}
+
+float gpsUtilsWrapper_get_longitude(int index) {
+  switch(index) {
+    case 1:
+      gps1.longitude;
+      break;
+    case 2:
+      gps2.longitude;
+      break;
+  }
+}

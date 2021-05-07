@@ -10,8 +10,10 @@ const int PAGE_LENGTH = 40;
 class GPS_UTIL
 {
     public:
-        char latStr[13];
-        char longStr[13];
+        // char latStr[13];
+        // char longStr[13];
+        float latitude;
+        float longitude;
         unsigned int idx;
         GPS_UTIL(unsigned int _idx, unsigned int _RXPin, unsigned int _TXPin);
         void begin(unsigned int baudRate);

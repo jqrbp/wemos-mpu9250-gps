@@ -3,12 +3,14 @@
 #include "webUtils.h"
 #include <LittleFS.h>
 #include "fileUtils.h"
+#include "gpsUtilsWrapper.h"
+
 extern "C" {
 #include "quaternion.h"
 }
 
 MPU9250_DMP imu;
-static char imuTxtBuffer[250];
+static char imuTxtBuffer[320];
 
 float qw,qx,qy,qz;
 float ax,ay,az, mx, my, mz;
@@ -49,8 +51,13 @@ void printIMUData(void)
 {  
   if (millis() - printTime > printTimeLimit) {
     if (print_flag) {
-      sprintf(imuTxtBuffer, "{\"dqw\":%.4f,\"dqx\":%.4f,\"dqy\":%.4f,\"dqz\":%.4f,\"qw\":%.4f,\"qx\":%.4f,\"qy\":%.4f,\"qz\":%.4f,\"r\":%.2f,\"p\":%.2f,\"y\":%.2f,\"ax\":%.4f,\"ay\":%.4f,\"az\":%.4f,\"mx\":%.4f,\"my\":%.4f,\"mz\":%.4f,\"mh\":%.4f,\"h\":%.4f}", 
-        qw,qx,qy,qz,(float)fusedQuat[QUAT_W], (float)fusedQuat[QUAT_X], (float)fusedQuat[QUAT_Y], (float)fusedQuat[QUAT_Z], (float)dmpEuler[VEC3_X], (float)dmpEuler[VEC3_Y], (float)dmpEuler[VEC3_Z], ax, ay, az, mx, my, mz, (float)magYaw, fHeading[0]);
+      sprintf(imuTxtBuffer, "{\"lat1\":%.8f,\"lng1\":%.8f,\"lat2\":%.8f,\"lng2\":%.8f,\"dqw\":%.4f,\"dqx\":%.4f,\"dqy\":%.4f,\"dqz\":%.4f,\"qw\":%.4f,\"qx\":%.4f,\"qy\":%.4f,\"qz\":%.4f,\"r\":%.2f,\"p\":%.2f,\"y\":%.2f,\"ax\":%.4f,\"ay\":%.4f,\"az\":%.4f,\"mx\":%.4f,\"my\":%.4f,\"mz\":%.4f,\"mh\":%.4f,\"h\":%.4f}", 
+        gpsUtilsWrapper_get_latitude(1),gpsUtilsWrapper_get_longitude(1),gpsUtilsWrapper_get_latitude(2),gpsUtilsWrapper_get_longitude(2),
+        qw,qx,qy,qz,
+        (float)fusedQuat[QUAT_W], (float)fusedQuat[QUAT_X], (float)fusedQuat[QUAT_Y], (float)fusedQuat[QUAT_Z], 
+        (float)dmpEuler[VEC3_X], (float)dmpEuler[VEC3_Y], (float)dmpEuler[VEC3_Z], 
+        ax, ay, az, mx, my, mz, 
+        (float)magYaw, fHeading[0]);
       SSEBroadcastTxt(imuTxtBuffer);
       print_flag = false;
     }
@@ -214,7 +221,7 @@ int imu_calcHeading(void) {
 	quaternionToEuler(dmpQuat, dmpEuler);
 
   fusedEuler[VEC3_X] = dmpEuler[VEC3_X];
-	fusedEuler[VEC3_Y] = -dmpEuler[VEC3_Y]; // dmp pitch is going down + but the eulerToQuaternion requires the pitch is up +
+	fusedEuler[VEC3_Y] = -dmpEuler[VEC3_Y]; // dmp pitch is going down + but the eulerToQuaternion requires the pitch to be up +
 	fusedEuler[VEC3_Z] = 0; //-atan2(mx, my); // this good with calibration but very prone to tilt
 
   // X axis = dmp X axis = mag Y axis
